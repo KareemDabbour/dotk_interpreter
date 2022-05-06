@@ -109,8 +109,6 @@ if("a" > "z" && 1 != 1){
 
 
 ## Future Features
-### Unary Operators
-There is currently no way to express `-2` explicitly since `-` only represents a binary subtraction. 
 
 ### Arrays & Array-like Structures
 There is currently no way to declare an array. However, it's in the works!
@@ -133,7 +131,13 @@ var x = 12;
 ```
 would be lexed to the following list of tokens
 ```js
-[Token("var", ID_TOKEN), Token("x", ID_TOKEN), Token("=",EQ_TOKEN), Token("12", INT_TOKEN), Token(";", SEMI_TOKEN)]
+[
+    Token("var", ID_TOKEN), 
+    Token("x", ID_TOKEN), 
+    Token("=",EQ_TOKEN), 
+    Token("12", INT_TOKEN), 
+    Token(";", SEMI_TOKEN)
+]
 ```
 
 ### Parsing

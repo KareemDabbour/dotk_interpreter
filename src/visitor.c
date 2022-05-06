@@ -5,7 +5,7 @@
 #include <string.h>
 
 const char *enum_names[25] = {
-    "NOOP",
+    "NULL",
     "FUNCTION CALL",
     "FUNCTION DEFINITION",
     "VARIABLE DEFINITION",
@@ -73,7 +73,7 @@ visitor_T *init_visitor()
 
 AST_T *visitor_visit(visitor_T *visitor, AST_T *node)
 {
-    printf("Visiting: %s\n", enum_names[node->type]);
+    // printf("Visiting: %s\n", enum_names[node->type]);
     switch (node->type)
     {
     case AST_FUNC_CALL:
@@ -298,6 +298,31 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
         ret->float_val = left->int_val + right->float_val;
         return ret;
     }
+    else if (left->type == AST_NOOP)
+    {
+        switch (right->type)
+        {
+        case AST_FLOAT:
+        {
+            AST_T *ret = init_ast(AST_FLOAT);
+            ret->float_val = right->float_val;
+            return ret;
+        }
+
+        case AST_INT:
+        {
+            AST_T *ret = init_ast(AST_INT);
+            ret->int_val = right->int_val;
+            return ret;
+        }
+        default:
+        {
+            printf("bad operand type for unary +: '%s'\n", enum_names[right->type]);
+            exit(1);
+        }
+        }
+    }
+
     else
     {
         printf("Cannot add objects of type '%s' and '%s'\n", enum_names[left->type], enum_names[right->type]);
@@ -342,6 +367,35 @@ AST_T *visitor_visit_sub(visitor_T *visitor, AST_T *node)
         AST_T *ret = init_ast(AST_FLOAT);
         ret->float_val = left->int_val - right->float_val;
         return ret;
+    }
+    else if (left->type == AST_NOOP)
+    {
+        switch (right->type)
+        {
+        case AST_FLOAT:
+        {
+            AST_T *ret = init_ast(AST_FLOAT);
+            ret->float_val = -1 * right->float_val;
+            return ret;
+        }
+
+        case AST_INT:
+        {
+            AST_T *ret = init_ast(AST_INT);
+            ret->int_val = -1 * right->int_val;
+            return ret;
+        }
+        default:
+        {
+            printf("bad operand type for unary -: '%s'\n", enum_names[right->type]);
+            exit(1);
+        }
+        }
+    }
+    else if (right->type == AST_NOOP)
+    {
+        printf("bad operand type for unary -: '%s'\n", enum_names[right->type]);
+        exit(1);
     }
     else
     {
