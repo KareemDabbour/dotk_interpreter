@@ -149,7 +149,7 @@ Now that we have our ASTs lined up, all that's left is to transverse them proper
 ## Installing & Running
 From the root directory, run the following:
 ```bash 
-make install 
+sudo make install 
 dotk example/factorial.k
 ```
 
