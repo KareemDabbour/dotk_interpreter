@@ -49,6 +49,9 @@ static AST_T *builtin_function_print(visitor_T *visitor, AST_T *node, AST_T **ar
         case AST_FLOAT:
             printf("%.2f\n", visited_ast->float_val);
             break;
+        case AST_NOOP:
+            printf("NULL\n");
+            break;
         case AST_BOOL:
         {
             if (visited_ast->is_true)

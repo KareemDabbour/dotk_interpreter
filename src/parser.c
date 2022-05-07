@@ -350,9 +350,8 @@ AST_T *parser_parse_func_def(parser_T *parser, scope_T *scope)
     parser_eat(parser, TOKEN_LBRA);
     func_def->func_body = parser_parse_statements(parser, scope);
     func_def->func_body->parent = func_def;
-    // printf("FUNC BODY SCOPE: %p\n", func_def->func_body->scope);
     func_def->func_name = func_name;
-    // printf("parcer.c -- FUNC DEF\n");
+
     parser_eat(parser, TOKEN_RBRA);
     func_def->scope = scope;
     func_def->global_scope = parser->scope;
@@ -392,10 +391,7 @@ AST_T *parser_parse_return_stmnt(parser_T *parser, scope_T *scope)
 {
     AST_T *ast_ret = init_ast(AST_RET_STMNT);
     parser_eat(parser, TOKEN_ID); // eat the 'ret'
-    // parser_eat(parser, TOKEN_LBRA);
     ast_ret->return_expr = parser_parse_expr(parser, scope, ast_ret);
-    // parser_eat(parser, TOKEN_RBRA);
-    // parser_eat(parser, TOKEN_SEMI);
 
     ast_ret->scope = scope;
     ast_ret->global_scope = parser->scope;
@@ -474,6 +470,11 @@ AST_T *parser_parse_id(parser_T *parser, scope_T *scope)
     else if (strncmp(parser->current_token->value, "False", 6) == 0)
     {
         return parser_parse_bool(parser, scope, 0);
+    }
+    else if (strncmp(parser->current_token->value, "NULL", 5) == 0)
+    {
+        parser_eat(parser, TOKEN_ID);
+        return init_ast(AST_NOOP);
     }
     else
     {
