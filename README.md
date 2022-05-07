@@ -16,6 +16,8 @@ It naturally follows the order of operations unless specified otherwise with par
 // # Integer Division
 ```
 
+More math examples can be seen in `examples/math.k`
+
 ## Printing 
 Using the builtin function `print`, you can print to the standard output.
 
