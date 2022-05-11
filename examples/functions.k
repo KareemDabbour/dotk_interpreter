@@ -9,7 +9,7 @@ def foo(){
 # separated by commas. 
 
 def bar(x, y, z){
-    print("The three are from the func 'bar'",x, y, z);
+    print("The three are from the func 'bar'","x: " + x, "y: "+y, "z: "+z);
 };
 
 def foo2(x){
@@ -31,7 +31,7 @@ foo();
 print("-----bar-----");
 bar(1, 2, "Third");
 print("-----foo2-----");
-print(foo2(2));
+print("2 + 1 = " + foo2(2));
 print("-----bar2-----");
 print(bar2(0));
 print(bar2(2));

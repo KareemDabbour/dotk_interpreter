@@ -5,5 +5,6 @@ def fact(x){
             ret x * fact(x-1);
         };
 };
-print("3! ==");
-print(fact(3));
+
+var k = 5;
+print(k + "! == " + fact(k));
