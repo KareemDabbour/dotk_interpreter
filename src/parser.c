@@ -3,6 +3,28 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void parser_eat(parser_T *parser, int token_type);
+
+static AST_T *parser_parse_statements(parser_T *parser, scope_T *scope);
+
+static AST_T *parser_parse_expr(parser_T *parser, scope_T *scope, AST_T *parent);
+
+static AST_T *parser_parse_factor(parser_T *parser, scope_T *scope, AST_T *parent);
+
+static AST_T *parser_parse_term(parser_T *parser, scope_T *scope, AST_T *parent);
+
+static AST_T *parser_parse_func_call(parser_T *parser, scope_T *scope);
+
+static AST_T *parser_parse_func_def(parser_T *parser, scope_T *scope);
+
+static AST_T *parser_parse_var(parser_T *parser, scope_T *scope);
+
+static AST_T *parser_parse_var_def(parser_T *parser, scope_T *scope);
+
+static AST_T *parser_parse_str(parser_T *parser, scope_T *scope);
+
+static AST_T *parser_parse_id(parser_T *parser, scope_T *scope);
+
 const char *token_names[25] = {
     "IDENTIFIER",              // 0
     "EQUALS",                  // 1
@@ -76,6 +98,10 @@ AST_T *parser_parse_statements(parser_T *parser, scope_T *scope)
     compound->compound_val = calloc(1, sizeof(struct AST_STRUCT *));
 
     AST_T *ast_statement = parser_parse_expr(parser, new_scope, compound);
+    if (ast_statement->type == AST_NOOP)
+    {
+        return init_ast(AST_NOOP);
+    }
     parser_eat(parser, TOKEN_SEMI);
     ast_statement->scope = new_scope;
     compound->compound_val[0] = ast_statement;

@@ -22,6 +22,4 @@ AST_T *scope_get_var_def(scope_T *scope, const char *vname);
 
 int scope_rem_var_def(scope_T *scope, const char *vname);
 
-void remove_elem(scope_T *scope, int index);
-
 #endif

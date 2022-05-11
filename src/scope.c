@@ -2,6 +2,8 @@
 #include <string.h>
 #include <stdio.h>
 
+static void remove_elem(scope_T *scope, int index);
+
 scope_T *init_scope()
 {
     scope_T *scope = calloc(1, sizeof(struct SCOPE_STRUCT));
