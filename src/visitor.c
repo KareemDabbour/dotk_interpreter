@@ -174,7 +174,18 @@ AST_T *visitor_visit_func_call(visitor_T *visitor, AST_T *node)
             scope_add_var_def(func_def->func_body->scope, var_def);
         }
     }
-    return visitor_visit(visitor, func_def->func_body);
+
+    AST_T *visited_body = visitor_visit(visitor, func_def->func_body);
+    if (func_def->func_def_args_size > 0)
+    {
+        for (int i = 0; i < (int)node->func_call_args_size; i++)
+        {
+            AST_T *ast_var = (AST_T *)func_def->func_def_args[i];
+
+            scope_rem_var_def(func_def->func_body->scope, ast_var->var_name);
+        }
+    }
+    return visited_body;
 }
 
 AST_T *visitor_visit_func_def(visitor_T *visitor, AST_T *node)
@@ -289,17 +300,96 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
         }
         }
     }
-    else if (left->type == AST_FLOAT && right->type == AST_INT)
+    else if (left->type == AST_FLOAT)
     {
-        AST_T *ret = init_ast(AST_FLOAT);
-        ret->float_val = left->float_val + right->int_val;
-        return ret;
+        switch (right->type)
+        {
+        case AST_INT:
+        {
+            AST_T *ret = init_ast(AST_FLOAT);
+            ret->float_val = left->float_val + right->int_val;
+            return ret;
+        }
+        case AST_STR:
+        {
+            AST_T *ret = init_ast(AST_STR);
+            char str[171];
+            sprintf(str, "%.2f%s", left->float_val, right->str_val);
+            int len = strlen(str);
+            ret->str_val = calloc(len, sizeof(char));
+            strncpy(ret->str_val, str, len);
+            return ret;
+        }
+        default:
+            break;
+        }
     }
-    else if (left->type == AST_INT && right->type == AST_FLOAT)
+    else if (left->type == AST_INT)
     {
-        AST_T *ret = init_ast(AST_FLOAT);
-        ret->float_val = left->int_val + right->float_val;
-        return ret;
+
+        switch (right->type)
+        {
+        case AST_FLOAT:
+        {
+            AST_T *ret = init_ast(AST_FLOAT);
+            ret->float_val = left->int_val + right->float_val;
+            return ret;
+        }
+        case AST_STR:
+        {
+            AST_T *ret = init_ast(AST_STR);
+            char str[171];
+            sprintf(str, "%d%s", left->int_val, right->str_val);
+            int len = strlen(str);
+            ret->str_val = calloc(len, sizeof(char));
+            strncpy(ret->str_val, str, len);
+            return ret;
+        }
+        default:
+            break;
+        }
+    }
+    else if (left->type == AST_STR)
+    {
+        AST_T *ret = init_ast(AST_STR);
+        char str[171];
+        switch (right->type)
+        {
+        case AST_FLOAT:
+        {
+            sprintf(str, "%s%.2f", left->str_val, right->float_val);
+            int len = strlen(str);
+            ret->str_val = calloc(len, sizeof(char));
+            strncpy(ret->str_val, str, len);
+            return ret;
+        }
+        case AST_INT:
+        {
+            sprintf(str, "%s%d", left->str_val, right->int_val);
+            int len = strlen(str);
+            ret->str_val = calloc(len, sizeof(char));
+            strncpy(ret->str_val, str, len);
+            return ret;
+        }
+        case AST_BOOL:
+        {
+            sprintf(str, "%s%s", left->str_val, right->is_true ? "True" : "False");
+            int len = strlen(str);
+            ret->str_val = calloc(len, sizeof(char));
+            strncpy(ret->str_val, str, len);
+            return ret;
+        }
+        case AST_NOOP:
+        {
+            sprintf(str, "%sNULL", left->str_val);
+            int len = strlen(str);
+            ret->str_val = calloc(len, sizeof(char));
+            strncpy(ret->str_val, str, len);
+            return ret;
+        }
+        default:
+            break;
+        }
     }
     else if (left->type == AST_NOOP)
     {
@@ -318,6 +408,14 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
             ret->int_val = right->int_val;
             return ret;
         }
+        case AST_STR:
+        {
+            AST_T *ret = init_ast(AST_STR);
+            ret->str_val = calloc(strlen(right->str_val) + 4, sizeof(char));
+            strcat(ret->str_val, "NULL");
+            strcat(ret->str_val, right->str_val);
+            return ret;
+        }
         default:
         {
             printf("bad operand type for unary +: '%s'\n", enum_names[right->type]);
@@ -325,12 +423,18 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
         }
         }
     }
-
-    else
+    else if (left->type == AST_BOOL && right->type == AST_STR)
     {
-        printf("Cannot add objects of type '%s' and '%s'\n", enum_names[left->type], enum_names[right->type]);
-        exit(1);
+        AST_T *ret = init_ast(AST_STR);
+        char str[171];
+        sprintf(str, "%s%s", left->is_true ? "True" : "False", right->str_val);
+        int len = strlen(str);
+        ret->str_val = calloc(len, sizeof(char));
+        strncpy(ret->str_val, str, len);
+        return ret;
     }
+    printf("Cannot add objects of type '%s' and '%s'\n", enum_names[left->type], enum_names[right->type]);
+    exit(1);
 }
 
 AST_T *visitor_visit_sub(visitor_T *visitor, AST_T *node)
@@ -547,7 +651,7 @@ AST_T *visitor_visit_not_eq_comp(visitor_T *visitor, AST_T *node)
         case AST_STR:
         {
             AST_T *ret = init_ast(AST_BOOL);
-            ret->is_true = strcmp(left->str_val, right->str_val) != 0;
+            ret->is_true = strncmp(left->str_val, right->str_val, strnlen(left->str_val, 151)) != 0;
             return ret;
         }
         default:

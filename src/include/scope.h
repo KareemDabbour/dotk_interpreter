@@ -19,4 +19,9 @@ AST_T *scope_get_func_def(scope_T *scope, const char *fname);
 AST_T *scope_add_var_def(scope_T *scope, AST_T *var_def);
 
 AST_T *scope_get_var_def(scope_T *scope, const char *vname);
+
+int scope_rem_var_def(scope_T *scope, const char *vname);
+
+void remove_elem(scope_T *scope, int index);
+
 #endif

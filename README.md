@@ -27,6 +27,15 @@ print("This is printing a string");
 print(41, 3.123, 1==1);
 ```
 
+You can also format strings with the `+` operator. For example:
+```py
+print("It is " + 1==1 + " that 1 is equal to 1");
+# Output: "It is True that 1 is equal to 1"
+
+print("It is " + 2==1 + " that 2 is equal to 1");
+# Output: "It is False that 2 is equal to 1"
+```
+
 More print examples can be seen in `examples/print.k` 
 
 ## Variable Declarations
@@ -49,6 +58,7 @@ def foo(){
 };
 
 foo();
+# Output: This is function 'foo'
 ``` 
 
 ### Functions with Arguments
@@ -59,6 +69,7 @@ def foo(x){
 };
 
 foo("with arguments!");
+# Output: This is function 'foo' with arguments!
 ``` 
 
 ### Functions with Return Statements
@@ -76,11 +87,26 @@ def bar(x){
         };
 };
 
-print(foo(2));
-print(bar(0));
-print(bar(2));
+print(foo(2)); # Output: 3
+print(bar(0)); # Output: 1
+print(bar(2)); # Output: 4.26
 ```
 *Please note that you currently must return out of every nested if-else statement* 
+
+### Functions and Recurssion
+The following code is an example of how `Dot-K` can handle simple recursion.
+```py js
+def fact(x){
+    ret if(x < 2){
+            ret 1;
+        }else{
+            ret x * fact(x-1);
+        };
+};
+print("5! == " + fact(5));
+# Output: 5! == 120
+```
+*If you would like to see more, take a look at `examples/factorial.k` as well as `examples/fibonacci.k`*
 
 More function definition examples can be seen in `examples/functions.k` 
 
@@ -90,22 +116,26 @@ Much like many other programming languages `Dot-K` has support for `if-else` sta
 
 The following code is an example of how to use them:
 ```py
+# Output: 'a' is less than 'z'
 if("a" < "z"){
     print("'a' is less than 'z'");
 }else{
     print("Something is wrong!");
 };
 
+# Output: 'a' > 'z' OR 1 == 1
 if("a" > "z" || 1 == 1){
     print("'a' > 'z' OR 1 == 1");
 }else{
     print("Something is wrong!");
 };
 
+
+# Output: 'a'<'z' OR 1 == 1
 if("a" > "z" && 1 != 1){
     print("'a' > 'z' AND 1 != 1");
 }else{
-    print("'a'<'z' or 1 == 1");
+    print("'a'<'z' OR 1 == 1");
 };
 ```
 
@@ -117,10 +147,6 @@ There is currently no way to declare an array. However, it's in the works!
 
 ### While and for loops
 Since there are no arrays or array-like data structures in this language there was no real need for `while` and `for` loops. However, this is being worked in conjuntion with `arrays`.
-
-### Call stack
-Currently, there is no call stack, so the most recent argument variable will be used rather than the appropriate value. This affects recursive functions that have multiple calls to themselves -- for example the function to calculate the nth fibonacci term. 
-
 
 ## Implementation
 
