@@ -218,6 +218,11 @@ token_T *lexer_collect_string(lexer_T *lexer)
 
     while (lexer->c != '"')
     {
+        if (lexer->c == '\\' && lexer_peek(lexer) == 'n')
+        {
+            lexer_advance(lexer);
+            lexer->c = '\n';
+        }
         char *s = lexer_get_current_as_string(lexer);
         val = realloc(val, strlen(val) + strlen(s) + 1 * sizeof(char));
         strcat(val, s);

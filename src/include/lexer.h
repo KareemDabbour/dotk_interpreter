@@ -12,7 +12,6 @@ typedef struct LEXER_STRUCT
 // Initialize the lexer
 lexer_T *init_lexer(char *contents);
 
-//
 void lexer_advance(lexer_T *lexer);
 
 void lexer_skip_whitespace(lexer_T *lexer);
