@@ -4,6 +4,33 @@
 #include <stdio.h>
 #include <string.h>
 
+static AST_T *builtin_function_print(visitor_T *visitor, AST_T *node, AST_T **args, size_t args_size);
+static AST_T *__visit_ret_stmnt__(visitor_T *visitor, AST_T *node, AST_T *to_visit);
+static AST_T *visitor_visit_func_call(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_func_def(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_var_def(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_var(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_str(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_compound(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_int(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_bool(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_float(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_sub(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_mul(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_div(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_int_div(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_if_statement(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_ret_statement(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_and(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_or(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_not_eq_comp(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_eq_comp(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_lt_comp(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_gt_comp(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_lte_comp(visitor_T *visitor, AST_T *node);
+static AST_T *visitor_visit_gte_comp(visitor_T *visitor, AST_T *node);
+
 const char *enum_names[25] = {
     "NULL",
     "FUNCTION CALL",
@@ -32,7 +59,7 @@ const char *enum_names[25] = {
     "NOT EQUALS COMPARATOR",
 };
 
-static AST_T *builtin_function_print(visitor_T *visitor, AST_T *node, AST_T **args, size_t args_size)
+AST_T *builtin_function_print(visitor_T *visitor, AST_T *node, AST_T **args, size_t args_size)
 {
     for (size_t i = 0; i < args_size; i++)
     {
@@ -76,6 +103,7 @@ visitor_T *init_visitor()
 
 AST_T *visitor_visit(visitor_T *visitor, AST_T *node)
 {
+    // For debugging
     // printf("Visiting: %s\n", enum_names[node->type]);
     switch (node->type)
     {
@@ -1009,8 +1037,26 @@ AST_T *visitor_visit_compound(visitor_T *visitor, AST_T *node)
     for (int i = 0; i < node->compound_size; i++)
     {
         if (node->compound_val[i]->type == AST_RET_STMNT)
-            return visitor_visit(visitor, node->compound_val[i]);
-        visitor_visit(visitor, node->compound_val[i]);
+            return __visit_ret_stmnt__(visitor, node, node->compound_val[i]);
+
+        AST_T *visit = visitor_visit(visitor, node->compound_val[i]);
+        if (visit->type == AST_RET_STMNT)
+            return __visit_ret_stmnt__(visitor, node, visit);
     }
     return init_ast(AST_NOOP);
+}
+
+AST_T *__visit_ret_stmnt__(visitor_T *visitor, AST_T *node, AST_T *to_visit)
+{
+    if (node->parent != NULL && node->parent->type != AST_FUNC_DEF)
+    {
+        AST_T *ret = init_ast(AST_RET_STMNT);
+        ret->return_expr = visitor_visit(visitor, to_visit);
+        ret->scope = node->scope;
+        ret->global_scope = node->global_scope;
+        ret->parent = node;
+        return ret;
+    }
+    else
+        return visitor_visit(visitor, to_visit);
 }

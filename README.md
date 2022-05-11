@@ -80,28 +80,27 @@ def foo(x){
 };
 
 def bar(x){
-    ret if(x == 0){
-            ret 1;
-        }else{
-            ret 2.13 * x;
-        };
+    if(x == 0){
+        ret 1;
+    }else{
+        ret 2.13 * x;
+    };
 };
 
 print(foo(2)); # Output: 3
 print(bar(0)); # Output: 1
 print(bar(2)); # Output: 4.26
 ```
-*Please note that you currently must return out of every nested if-else statement* 
 
 ### Functions and Recurssion
 The following code is an example of how `Dot-K` can handle simple recursion.
 ```py js
 def fact(x){
-    ret if(x < 2){
-            ret 1;
-        }else{
-            ret x * fact(x-1);
-        };
+    if(x < 2){
+        ret 1;
+    }else{
+        ret x * fact(x-1);
+    };
 };
 print("5! == " + fact(5));
 # Output: 5! == 120
