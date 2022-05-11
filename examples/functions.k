@@ -17,11 +17,11 @@ def foo2(x){
 };
 
 def bar2(x){
-    ret if(x == 0){
-            ret 1;
-        }else{
-            ret 2.13 * x;
-        };
+    if(x == 0){
+        ret 1;
+    }else{
+        ret 2.13 * x;
+    };
 };
 
 
