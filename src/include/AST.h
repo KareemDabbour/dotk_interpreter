@@ -40,6 +40,7 @@ typedef struct AST_STRUCT
     // AST VAR DEF
     char *var_def_var_name;
     struct AST_STRUCT *var_def_val;
+    struct AST_STRUCT *var_def_expr;
 
     // AST VAR
     char *var_name;
@@ -80,6 +81,10 @@ typedef struct AST_STRUCT
 
     // AST RET STATEMENT
     struct AST_STRUCT *return_expr;
+
+    // AST ARR
+    struct AST_STRUCT **arr;
+    size_t arr_len;
 
     // AST BOOL
     int is_true;

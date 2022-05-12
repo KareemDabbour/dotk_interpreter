@@ -186,33 +186,50 @@ AST_T *visitor_visit_func_call(visitor_T *visitor, AST_T *node)
         exit(1);
     }
 
-    if (func_def->func_def_args_size > 0)
+    AST_T *args[node->func_call_args_size];
+    for (int i = 0; i < (int)node->func_call_args_size; i++)
     {
-        for (int i = 0; i < (int)node->func_call_args_size; i++)
-        {
-            AST_T *ast_var = (AST_T *)func_def->func_def_args[i];
+        AST_T *ast_var = (AST_T *)func_def->func_def_args[i];
 
-            AST_T *ast_value = visitor_visit(visitor, (AST_T *)node->func_call_args[i]);
-            AST_T *var_def = init_ast(AST_VAR_DEF);
+        AST_T *ast_value = visitor_visit(visitor, (AST_T *)node->func_call_args[i]);
+        AST_T *var_def = init_ast(AST_VAR_DEF);
 
-            var_def->var_def_val = ast_value;
-            var_def->var_def_var_name = calloc(strlen(ast_var->var_name) + 1, sizeof(char));
-            strcpy(var_def->var_def_var_name, ast_var->var_name);
-            var_def->scope = func_def->func_body->scope;
-            scope_add_var_def(func_def->func_body->scope, var_def);
-        }
+        var_def->var_def_val = ast_value;
+        var_def->var_def_var_name = calloc(strlen(ast_var->var_name) + 1, sizeof(char));
+        strcpy(var_def->var_def_var_name, ast_var->var_name);
+        var_def->scope = func_def->func_body->scope;
+        args[i] = var_def;
+    }
+    // Add the param vars to function body scope after using current scopes' values
+    for (int i = 0; i < (int)node->func_call_args_size; i++)
+        scope_add_var_def(func_def->func_body->scope, args[i]);
+
+    // Getting the number of variables declared in the function body
+    int num_var_def_in_func = 0;
+    for (int i = 0; i < func_def->func_body->compound_size; i++)
+    {
+        if (func_def->func_body->compound_val[i]->type == AST_VAR_DEF)
+            num_var_def_in_func++;
+    }
+    // Keep track of the variables declared in the function body
+    char *vars_to_be_removed[num_var_def_in_func];
+    for (int i = 0; i < func_def->func_body->compound_size; i++)
+    {
+        if (func_def->func_body->compound_val[i]->type == AST_VAR_DEF)
+            vars_to_be_removed[i] = func_def->func_body->compound_val[i]->var_def_var_name;
     }
 
+    // Visit the function body
     AST_T *visited_body = visitor_visit(visitor, func_def->func_body);
-    if (func_def->func_def_args_size > 0)
-    {
-        for (int i = 0; i < (int)node->func_call_args_size; i++)
-        {
-            AST_T *ast_var = (AST_T *)func_def->func_def_args[i];
 
-            scope_rem_var_def(func_def->func_body->scope, ast_var->var_name);
-        }
-    }
+    // Remove param variable declarations from the function body
+    for (int i = 0; i < (int)node->func_call_args_size; i++)
+        scope_rem_var_def(func_def->func_body->scope, func_def->func_def_args[i]->var_name);
+
+    // Remove variables declared in function body
+    for (int i = 0; i < num_var_def_in_func; i++)
+        scope_rem_var_def(func_def->func_body->scope, vars_to_be_removed[i]);
+
     return visited_body;
 }
 
@@ -224,7 +241,7 @@ AST_T *visitor_visit_func_def(visitor_T *visitor, AST_T *node)
 
 AST_T *visitor_visit_var_def(visitor_T *visitor, AST_T *node)
 {
-    node->var_def_val = visitor_visit(visitor, node->var_def_val);
+    node->var_def_val = visitor_visit(visitor, node->var_def_expr);
     scope_add_var_def(node->scope, node);
     return node;
 }

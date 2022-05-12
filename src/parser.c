@@ -443,10 +443,10 @@ AST_T *parser_parse_var_def(parser_T *parser, scope_T *scope)
     parser_eat(parser, TOKEN_ID);
     parser_eat(parser, TOKEN_EQ);
     AST_T *var_def = init_ast(AST_VAR_DEF);
-    AST_T *var_def_val = parser_parse_expr(parser, scope, var_def);
+    AST_T *var_def_expr = parser_parse_expr(parser, scope, var_def);
 
     var_def->var_def_var_name = var_def_name;
-    var_def->var_def_val = var_def_val;
+    var_def->var_def_expr = var_def_expr;
 
     var_def->scope = scope;
     return var_def;

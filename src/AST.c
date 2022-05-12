@@ -11,6 +11,7 @@ AST_T *init_ast(int type)
 
     // AST VAR DEF
     ast->var_def_var_name = (void *)0;
+    ast->var_def_expr = (void *)0;
     ast->var_def_val = (void *)0;
 
     // AST VAR
@@ -40,6 +41,10 @@ AST_T *init_ast(int type)
 
     // AST INT
     ast->int_val = 0;
+
+    // AST ARR
+    ast->arr = (void *)0;
+    ast->arr_len = 0;
 
     // AST FLOAT
     ast->float_val = 0;
