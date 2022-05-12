@@ -32,9 +32,9 @@ void lexer_skip_whitespace(lexer_T *lexer)
 }
 
 /**
- * @brief Skips tokens between two '~' tokens. This acts
+ * @brief Skips tokens between two '~' tokens. This acts like a block comment
  *
- * @param lexer
+ * @param lexer An instance of a lexer struct
  */
 void lexer_skip_block_comments(lexer_T *lexer)
 {
@@ -52,9 +52,9 @@ void lexer_skip_block_comments(lexer_T *lexer)
 }
 
 /**
- * @brief Skips tokens between a '#' and a new line. This acts like a comment.
+ * @brief Skips tokens between a '#' and a new line. This acts like an inline comment.
  *
- * @param lexer
+ * @param lexer An instance of a lexer struct
  */
 void lexer_skip_comments(lexer_T *lexer)
 {
