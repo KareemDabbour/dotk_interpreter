@@ -486,7 +486,7 @@ AST_T *visitor_visit_sub(visitor_T *visitor, AST_T *node)
 {
     AST_T *left = visitor_visit(visitor, node->op_left);
     AST_T *right = visitor_visit(visitor, node->op_right);
-    if ((left->type == right->type))
+    if (left->type == right->type)
     {
         switch (left->type)
         {
@@ -560,7 +560,7 @@ AST_T *visitor_visit_mul(visitor_T *visitor, AST_T *node)
 {
     AST_T *left = visitor_visit(visitor, node->op_left);
     AST_T *right = visitor_visit(visitor, node->op_right);
-    if ((left->type == right->type))
+    if (left->type == right->type)
     {
         switch (left->type)
         {
@@ -606,7 +606,7 @@ AST_T *visitor_visit_div(visitor_T *visitor, AST_T *node)
 {
     AST_T *left = visitor_visit(visitor, node->op_left);
     AST_T *right = visitor_visit(visitor, node->op_right);
-    if ((left->type == right->type))
+    if (left->type == right->type)
     {
         switch (left->type)
         {
@@ -671,7 +671,7 @@ AST_T *visitor_visit_not_eq_comp(visitor_T *visitor, AST_T *node)
 {
     AST_T *left = visitor_visit(visitor, node->op_left);
     AST_T *right = visitor_visit(visitor, node->op_right);
-    if ((left->type == right->type))
+    if (left->type == right->type)
     {
         switch (left->type)
         {
@@ -727,7 +727,7 @@ AST_T *visitor_visit_eq_comp(visitor_T *visitor, AST_T *node)
 {
     AST_T *left = visitor_visit(visitor, node->op_left);
     AST_T *right = visitor_visit(visitor, node->op_right);
-    if ((left->type == right->type))
+    if (left->type == right->type)
     {
         switch (left->type)
         {
@@ -783,7 +783,7 @@ AST_T *visitor_visit_lt_comp(visitor_T *visitor, AST_T *node)
 {
     AST_T *left = visitor_visit(visitor, node->op_left);
     AST_T *right = visitor_visit(visitor, node->op_right);
-    if ((left->type == right->type))
+    if (left->type == right->type)
     {
         switch (left->type)
         {
@@ -835,7 +835,7 @@ AST_T *visitor_visit_gt_comp(visitor_T *visitor, AST_T *node)
 {
     AST_T *left = visitor_visit(visitor, node->op_left);
     AST_T *right = visitor_visit(visitor, node->op_right);
-    if ((left->type == right->type))
+    if (left->type == right->type)
     {
         switch (left->type)
         {
@@ -887,7 +887,7 @@ AST_T *visitor_visit_lte_comp(visitor_T *visitor, AST_T *node)
 {
     AST_T *left = visitor_visit(visitor, node->op_left);
     AST_T *right = visitor_visit(visitor, node->op_right);
-    if ((left->type == right->type))
+    if (left->type == right->type)
     {
         switch (left->type)
         {
@@ -939,7 +939,7 @@ AST_T *visitor_visit_gte_comp(visitor_T *visitor, AST_T *node)
 {
     AST_T *left = visitor_visit(visitor, node->op_left);
     AST_T *right = visitor_visit(visitor, node->op_right);
-    if ((left->type == right->type))
+    if (left->type == right->type)
     {
         switch (left->type)
         {
@@ -991,7 +991,7 @@ AST_T *visitor_visit_int_div(visitor_T *visitor, AST_T *node)
 {
     AST_T *left = visitor_visit(visitor, node->op_left);
     AST_T *right = visitor_visit(visitor, node->op_right);
-    if ((left->type == right->type))
+    if (left->type == right->type)
     {
         switch (left->type)
         {

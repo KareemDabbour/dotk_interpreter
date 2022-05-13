@@ -164,6 +164,16 @@ AST_T *parser_parse_expr(parser_T *parser, scope_T *scope, AST_T *parent)
             parser_eat(parser, TOKEN_OR);
             break;
         }
+        default:
+        {
+            printf("Unexpected token %s, expected %s, %s, %s or %s\n",
+                   token_names[parser->current_token->type],
+                   token_names[TOKEN_PLUS],
+                   token_names[TOKEN_SUB],
+                   token_names[TOKEN_AND],
+                   token_names[TOKEN_OR]);
+            exit(1);
+        }
         }
         temp->op_left = left_node;
         temp->op_right = parser_parse_term(parser, scope, parent);

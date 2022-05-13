@@ -12,6 +12,7 @@ lexer_T *init_lexer(char *contents)
     lexer->index = 0;
     lexer->c = contents[lexer->index];
     lexer->len = strlen(contents);
+    return lexer;
 }
 
 void lexer_advance(lexer_T *lexer)
