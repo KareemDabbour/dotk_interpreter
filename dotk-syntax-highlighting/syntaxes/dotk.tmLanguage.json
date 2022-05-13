@@ -1,0 +1,154 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Dot-K Interpreted Language",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#ctrl-statements"
+		},
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#numbers"
+		},
+		{
+			"include": "#operators"
+		},
+		{
+			"include": "#expression"
+		},
+		{
+			"include": "#variables"
+		},
+		{
+			"include": "#strings"
+		}
+	],
+	"repository": {
+		"ctrl-statements":{
+			"patterns":[{
+				"name":"keyword.control.dotk",
+                "match":"\\b(if|else|var|def|ret)\\b"
+			}]
+		},
+		"numbers":{
+			"patterns":[{
+                "match":"(-?[0-9][0-9\\.]*)",	
+				"name":"constant.numeric.dotk"
+			}]
+		},
+		"variables":{
+			"patterns":[{
+                "match":"([a-zA-Z]+_*)+",	
+				"name":"variable.name.dotk"
+			}]
+		},
+		"keywords": {
+			"patterns": [{
+				"name": "support.constant",
+				"match": "\\b(True|False|NULL)\\b"
+			}]
+		},
+		"expression": {
+			"patterns": [
+				{"include": "#keywords"},
+				{"include": "#numbers"},
+				{"include": "#strings"},
+				{"include": "#paren-expression"}
+			]
+		},
+		"paren-expression":{
+			"patterns":[
+				{
+					"captures":{
+						"1":{
+							"name": "entity.name.function.dotk"
+						}
+					},
+					"match": "\\b(\\w+)(?:\\s+([-a-zA-Z0-9_]+))?\\s*(\\()",
+					"name":"punctuation.definition.parameters.dotk",
+					"patterns": [{"include": "#expression"}]
+				}
+			]
+		},
+		"comments": {
+			"patterns": [
+				{
+				"begin": "\\~",
+				"beginCaptures": {
+					"0":{
+						"name": "punctuation.definition.comment.k"
+					}
+				},
+				"end": "\\~",
+				"name": "comment.block.dotk"
+				},
+				{
+					"captures": {
+					"0":{
+						"name":"punctuation.definition.comment.k"
+						}
+					},
+			
+				"match": "\\~\\~",
+				"name": "comment.block.empty.k"
+			},{
+				"include": "#comments-inline"
+			}
+		]},
+		"comments-inline":{
+			"patterns":[
+				{
+					"begin": "#",
+					"beginCaptures": {
+						"0":{
+							"name": "punctuation.definition.comment.k"
+						}
+					},
+					"end": "\\n",
+					"name": "comment.inline.dotk"
+					},
+					{
+						"captures": {
+						"0":{
+							"name":"punctuation.definition.comment.k"
+							}
+						},
+						"match": "\\#\\n",
+				"name": "comment.inline.empty.k"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.dotk",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.dotk",
+					"match": "\\\\."
+				}
+			]
+		},
+		"operators":{
+			"patterns": [
+				{
+					"match": "!=|==|<=|>=|<|>",
+					"name":"keyword.operator.comparison.dotk"
+				},
+				{
+					"match": "&&|\\|\\|",
+					"name":"keyword.operator.logical.dotk"
+				},
+				{
+					"match": "\\+|-|/|//|\\*",
+					"name":"keyword.operator.dotk"
+				}
+			]
+		}
+	},
+	"scopeName": "source.k"
+}

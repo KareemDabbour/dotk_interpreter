@@ -1,0 +1,25 @@
+{
+    "name": "k",
+    "displayName": "k",
+    "description": "Dot-K Interpreted Language",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.67.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "dotk",
+            "aliases": ["Dot-K Interpreted Language", "dotk"],
+            "extensions": [".k"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "dotk",
+            "scopeName": "source.k",
+            "path": "./syntaxes/dotk.tmLanguage.json"
+        }]
+    }
+}
