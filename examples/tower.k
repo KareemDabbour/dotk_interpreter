@@ -7,4 +7,4 @@ def tower(x, src,dest,aux){
     tower(x-1, aux, dest, src);
 };
 
-tower(3,"SOURCE","DEST","AUX");
+tower(3,"SOURCE","DESTINATION","AUXILIARY");
