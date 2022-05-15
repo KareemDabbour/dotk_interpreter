@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+#define MAX_STR_CHAR 2000
+#define MAX_NUM_SPACE 20
 static AST_T *builtin_function_print(visitor_T *visitor, AST_T *node, AST_T **args, size_t args_size);
 static AST_T *__visit_ret_stmnt__(visitor_T *visitor, AST_T *node, AST_T *to_visit);
 static AST_T *visitor_visit_func_call(visitor_T *visitor, AST_T *node);
@@ -358,10 +359,10 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
         case AST_STR:
         {
             AST_T *ret = init_ast(AST_STR);
-            char str[171];
+            char str[MAX_NUM_SPACE + MAX_STR_CHAR];
             sprintf(str, "%.2f%s", left->float_val, right->str_val);
             int len = strlen(str);
-            ret->str_val = calloc(len, sizeof(char));
+            ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
         }
@@ -383,10 +384,10 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
         case AST_STR:
         {
             AST_T *ret = init_ast(AST_STR);
-            char str[171];
+            char str[MAX_NUM_SPACE + MAX_STR_CHAR];
             sprintf(str, "%d%s", left->int_val, right->str_val);
             int len = strlen(str);
-            ret->str_val = calloc(len, sizeof(char));
+            ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
         }
@@ -397,14 +398,14 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
     else if (left->type == AST_STR)
     {
         AST_T *ret = init_ast(AST_STR);
-        char str[171];
+        char str[MAX_NUM_SPACE + MAX_STR_CHAR];
         switch (right->type)
         {
         case AST_FLOAT:
         {
             sprintf(str, "%s%.2f", left->str_val, right->float_val);
             int len = strlen(str);
-            ret->str_val = calloc(len, sizeof(char));
+            ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
         }
@@ -412,7 +413,7 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
         {
             sprintf(str, "%s%d", left->str_val, right->int_val);
             int len = strlen(str);
-            ret->str_val = calloc(len, sizeof(char));
+            ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
         }
@@ -420,7 +421,7 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
         {
             sprintf(str, "%s%s", left->str_val, right->is_true ? "True" : "False");
             int len = strlen(str);
-            ret->str_val = calloc(len, sizeof(char));
+            ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
         }
@@ -428,7 +429,7 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
         {
             sprintf(str, "%sNULL", left->str_val);
             int len = strlen(str);
-            ret->str_val = calloc(len, sizeof(char));
+            ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
         }
@@ -456,7 +457,7 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
         case AST_STR:
         {
             AST_T *ret = init_ast(AST_STR);
-            ret->str_val = calloc(strlen(right->str_val) + 4, sizeof(char));
+            ret->str_val = calloc(strlen(right->str_val) + 5, sizeof(char));
             strcat(ret->str_val, "NULL");
             strcat(ret->str_val, right->str_val);
             return ret;
@@ -471,10 +472,10 @@ AST_T *visitor_visit_add(visitor_T *visitor, AST_T *node)
     else if (left->type == AST_BOOL && right->type == AST_STR)
     {
         AST_T *ret = init_ast(AST_STR);
-        char str[171];
+        char str[MAX_NUM_SPACE + MAX_STR_CHAR];
         sprintf(str, "%s%s", left->is_true ? "True" : "False", right->str_val);
         int len = strlen(str);
-        ret->str_val = calloc(len, sizeof(char));
+        ret->str_val = calloc(len + 1, sizeof(char));
         strncpy(ret->str_val, str, len);
         return ret;
     }
@@ -696,7 +697,7 @@ AST_T *visitor_visit_not_eq_comp(visitor_T *visitor, AST_T *node)
         case AST_STR:
         {
             AST_T *ret = init_ast(AST_BOOL);
-            ret->is_true = strncmp(left->str_val, right->str_val, strnlen(left->str_val, 151)) != 0;
+            ret->is_true = strncmp(left->str_val, right->str_val, strnlen(left->str_val, MAX_STR_CHAR)) != 0;
             return ret;
         }
         default:
