@@ -5,6 +5,8 @@ typedef struct LEXER_STRUCT
 {
     char c;
     unsigned int index;
+    unsigned int line;
+    unsigned int col;
     char *contents;
     int len;
 } lexer_T;

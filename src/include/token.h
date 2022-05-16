@@ -31,6 +31,8 @@ typedef struct TOKEN_STRUCT
         TOKEN_OR        // 24
     } type;
     char *value;
+    unsigned int line;
+    unsigned int col;
 } token_T;
-token_T *init_token(int type, char *value);
+token_T *init_token(int type, char *value, unsigned int line, unsigned int col);
 #endif

@@ -26,31 +26,31 @@ static AST_T *parser_parse_str(parser_T *parser, scope_T *scope);
 static AST_T *parser_parse_id(parser_T *parser, scope_T *scope);
 
 const char *token_names[25] = {
-    "IDENTIFIER",              // 0
-    "EQUALS",                  // 1
-    "STRING",                  // 2
-    "SEMI-COLON",              // 3
-    "LEFT PARENTHESIS",        // 4
-    "RIGHT PARENTHESIS",       // 5
-    "LEFT BRACKET",            // 6
-    "RIGHT BRACKET",           // 7
-    "COMMA",                   // 8
-    "EOF",                     // 9
-    "PLUS",                    // 10
-    "MUL",                     // 11
-    "INT",                     // 12
-    "FLOAT",                   // 13
-    "SUB",                     // 14
-    "DIV",                     // 15
-    "INT_DIV",                 // 16
-    "EQUAL COMP",              // 17
-    "NOT EQUAL COMP",          // 18
-    "LESS THAN COMP",          // 19
-    "GREATER THAN COMP",       // 20
-    "LESS THAN EQUAL COMP",    // 21
-    "GREATER THAN EQUAL COMP", // 22
-    "AND SYMBOL",              // 23
-    "OR SYMBOL"                // 24
+    "IDENTIFIER",                       // 0
+    "EQUALS",                           // 1
+    "STRING",                           // 2
+    "SEMI-COLON",                       // 3
+    "LEFT PARENTHESIS",                 // 4
+    "RIGHT PARENTHESIS",                // 5
+    "LEFT BRACKET",                     // 6
+    "RIGHT BRACKET",                    // 7
+    "COMMA",                            // 8
+    "End of File",                      // 9
+    "ADDITION SYMBOL",                  // 10
+    "MULTIPLICATION SYMBOL",            // 11
+    "INT",                              // 12
+    "FLOAT",                            // 13
+    "SUBTRACTION SYMBOL",               // 14
+    "DIVISION SYMBOL",                  // 15
+    "INT DIVISION SYMBOL",              // 16
+    "EQUALS COMPARATOR",                // 17
+    "NOT EQUALS COMPARATOR",            // 18
+    "LESS THAN COMPARATOR",             // 19
+    "GREATER THAN COMPARATOR",          // 20
+    "LESS THAN OR EQUAL COMPARATOR",    // 21
+    "GREATER THAN OR EQUAL COMPARATOR", // 22
+    "AND COMPARATOR",                   // 23
+    "OR COMPARATOR"                     // 24
 
 };
 
@@ -78,7 +78,9 @@ void parser_eat(parser_T *parser, int token_type)
     }
     else
     {
-        printf("Unexpected Token '%s' with type '%s'\n",
+        printf("%d:%d -- Unexpected Token: '%s' with type '%s'\n",
+               parser->current_token->line,
+               parser->current_token->col,
                parser->current_token->value,
                token_names[parser->current_token->type]);
         printf("Expected: %s\n", token_names[token_type]);
@@ -166,7 +168,9 @@ AST_T *parser_parse_expr(parser_T *parser, scope_T *scope, AST_T *parent)
         }
         default:
         {
-            printf("Unexpected token %s, expected %s, %s, %s or %s\n",
+            printf("%d:%d -- Unexpected token: %s \nExpected %s, %s, %s or %s\n",
+                   parser->current_token->line,
+                   parser->current_token->col,
                    token_names[parser->current_token->type],
                    token_names[TOKEN_PLUS],
                    token_names[TOKEN_SUB],
@@ -258,7 +262,9 @@ AST_T *parser_parse_term(parser_T *parser, scope_T *scope, AST_T *parent)
         }
 
         default:
-            printf("Unexpected token '%s' with type '%d'\n",
+            printf("%d:%d -- Unexpected token: '%s' with type '%d'\n",
+                   parser->current_token->line,
+                   parser->current_token->col,
                    parser->current_token->value,
                    parser->current_token->type);
             exit(1);
