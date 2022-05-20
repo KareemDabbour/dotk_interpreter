@@ -11,3 +11,14 @@ def fib(x){
 };
 var k = 13;
 print("The Fibonacci number at index " + k + " is: " + fib(k));
+
+def bar(x, arr, max){
+    if(x == max){
+        ret arr;
+    }else{
+        arr[x] = fib(x+1);
+        ret bar(x+1, arr, max);
+    };
+};
+
+print("The first " + k + " Fibonacci numers are: " + bar(0, [k]{1}, k));  

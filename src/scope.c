@@ -44,7 +44,7 @@ AST_T *scope_get_func_def(scope_T *scope, const char *fname)
             return func_def;
         }
     }
-    return init_ast(AST_NOOP);
+    return init_ast(AST_NOOP, 0, 0);
 }
 
 AST_T *scope_add_var_def(scope_T *scope, AST_T *var_def)
@@ -75,7 +75,22 @@ AST_T *scope_get_var_def(scope_T *scope, const char *vname)
         if (strncmp(vdef->var_def_var_name, vname, strnlen(vname, 101)) == 0)
             return vdef;
     }
-    return init_ast(AST_NOOP);
+    return init_ast(AST_NOOP, 0, 0);
+}
+
+AST_T *scope_replace_var_def(scope_T *scope, AST_T *var_def)
+{
+    char *vname = var_def->var_def_var_name;
+    for (int i = scope->variable_definitions_size - 1; i > -1; i--)
+    {
+        AST_T *vdef = scope->variable_definitions[i];
+        if (strncmp(vdef->var_def_var_name, vname, strnlen(vname, 101)) == 0)
+        {
+            scope->variable_definitions[i] = var_def;
+            return var_def;
+        }
+    }
+    return init_ast(AST_NOOP, var_def->line, var_def->col);
 }
 
 int scope_rem_var_def(scope_T *scope, const char *vname)

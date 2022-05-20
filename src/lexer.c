@@ -102,6 +102,13 @@ token_T *lexer_get_next_token(lexer_T *lexer)
             return lexer_collect_number(lexer);
         switch (lexer->c)
         {
+        case '~':
+            lexer_skip_block_comments(lexer);
+            break;
+        case '#':
+            lexer_skip_comments(lexer);
+            break;
+
         case ';':
             return lexer_advance_with_token(lexer, init_token(TOKEN_SEMI, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
 
@@ -110,6 +117,12 @@ token_T *lexer_get_next_token(lexer_T *lexer)
 
         case ')':
             return lexer_advance_with_token(lexer, init_token(TOKEN_RPAR, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
+
+        case '[':
+            return lexer_advance_with_token(lexer, init_token(TOKEN_LSBRA, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
+
+        case ']':
+            return lexer_advance_with_token(lexer, init_token(TOKEN_RSBRA, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
 
         case '{':
             return lexer_advance_with_token(lexer, init_token(TOKEN_LBRA, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
@@ -216,6 +229,13 @@ token_T *lexer_get_next_token(lexer_T *lexer)
         case '"':
             return lexer_collect_string(lexer);
             break;
+        case '\0':
+            break;
+        default:
+        {
+            printf("%d:%d -- Unexpected token '%c' exiting\n", lexer->line, lexer->col, lexer->c);
+            exit(1);
+        }
         }
     }
     return init_token(TOKEN_EOF, "\0", lexer->line, lexer->col);

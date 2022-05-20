@@ -21,11 +21,17 @@ static AST_T *parser_parse_var(parser_T *parser, scope_T *scope);
 
 static AST_T *parser_parse_var_def(parser_T *parser, scope_T *scope);
 
+static AST_T *parser_parse_arr_index_assignment(parser_T *parser, scope_T *scope, char *var_name);
+
+static AST_T *parser_parse_arr_index(parser_T *parser, scope_T *scope, char *var_name);
+
+static AST_T *parser_parse_var_redef(parser_T *parser, scope_T *scope, char *var_name);
+
 static AST_T *parser_parse_str(parser_T *parser, scope_T *scope);
 
 static AST_T *parser_parse_id(parser_T *parser, scope_T *scope);
 
-const char *token_names[25] = {
+const char *token_names[27] = {
     "IDENTIFIER",                       // 0
     "EQUALS",                           // 1
     "STRING",                           // 2
@@ -50,8 +56,9 @@ const char *token_names[25] = {
     "LESS THAN OR EQUAL COMPARATOR",    // 21
     "GREATER THAN OR EQUAL COMPARATOR", // 22
     "AND COMPARATOR",                   // 23
-    "OR COMPARATOR"                     // 24
-
+    "OR COMPARATOR",                    // 24
+    "LEFT SQUARE BRACKET",              // 25
+    "RIGHT SQUARE BRACKET"              // 26
 };
 
 static scope_T *get_node_scope(parser_T *parser, AST_T *node)
@@ -95,14 +102,14 @@ AST_T *parser_parse(parser_T *parser, scope_T *scope)
 
 AST_T *parser_parse_statements(parser_T *parser, scope_T *scope)
 {
-    AST_T *compound = init_ast(AST_COMPOUND);
+    AST_T *compound = init_ast(AST_COMPOUND, parser->current_token->line, parser->current_token->col);
     scope_T *new_scope = init_scope();
     compound->compound_val = calloc(1, sizeof(struct AST_STRUCT *));
 
     AST_T *ast_statement = parser_parse_expr(parser, new_scope, compound);
     if (ast_statement->type == AST_NOOP)
     {
-        return init_ast(AST_NOOP);
+        return init_ast(AST_NOOP, parser->current_token->line, parser->current_token->col);
     }
     parser_eat(parser, TOKEN_SEMI);
     ast_statement->scope = new_scope;
@@ -139,7 +146,7 @@ AST_T *parser_parse_expr(parser_T *parser, scope_T *scope, AST_T *parent)
            (parser->current_token->type == TOKEN_AND) ||
            (parser->current_token->type == TOKEN_OR))
     {
-        AST_T *temp = init_ast(0);
+        AST_T *temp = init_ast(AST_NOOP, parser->current_token->line, parser->current_token->col);
         switch (parser->current_token->type)
         {
         case TOKEN_SUB:
@@ -203,7 +210,7 @@ AST_T *parser_parse_term(parser_T *parser, scope_T *scope, AST_T *parent)
            (parser->current_token->type == TOKEN_LTE_COMP) ||
            (parser->current_token->type == TOKEN_GTE_COMP))
     {
-        AST_T *temp = init_ast(0);
+        AST_T *temp = init_ast(AST_NOOP, parser->current_token->line, parser->current_token->col);
         switch (parser->current_token->type)
         {
         case TOKEN_MUL:
@@ -284,7 +291,7 @@ AST_T *parser_parse_factor(parser_T *parser, scope_T *scope, AST_T *parent)
     {
     case TOKEN_FLOAT:
     {
-        AST_T *ast_float = init_ast(AST_FLOAT);
+        AST_T *ast_float = init_ast(AST_FLOAT, parser->current_token->line, parser->current_token->col);
         ast_float->float_val = atof(parser->current_token->value);
         ast_float->parent = parent;
         parser_eat(parser, TOKEN_FLOAT);
@@ -293,7 +300,7 @@ AST_T *parser_parse_factor(parser_T *parser, scope_T *scope, AST_T *parent)
     }
     case TOKEN_INT:
     {
-        AST_T *ast_int = init_ast(AST_INT);
+        AST_T *ast_int = init_ast(AST_INT, parser->current_token->line, parser->current_token->col);
         ast_int->int_val = strtol(parser->current_token->value, NULL, 10);
         ast_int->parent = parent;
         parser_eat(parser, TOKEN_INT);
@@ -307,6 +314,56 @@ AST_T *parser_parse_factor(parser_T *parser, scope_T *scope, AST_T *parent)
         parser_eat(parser, TOKEN_RPAR);
         return ast_expr;
         break;
+    }
+    case TOKEN_LSBRA:
+    {
+        parser_eat(parser, TOKEN_LSBRA);
+        AST_T *ret = init_ast(AST_ARR_DEF, parser->current_token->line, parser->current_token->col);
+        ret->arr_size_expr = parser_parse_expr(parser, scope, parent);
+        parser_eat(parser, TOKEN_RSBRA);
+        AST_T *temp = ret;
+        while (parser->current_token->type == TOKEN_LSBRA)
+        {
+            AST_T *inner_indexing = init_ast(AST_ARR_DEF, parser->current_token->line, parser->current_token->col);
+            parser_eat(parser, TOKEN_LSBRA);
+            inner_indexing->arr_size_expr = parser_parse_expr(parser, scope, inner_indexing);
+            parser_eat(parser, TOKEN_RSBRA);
+            inner_indexing->scope = scope;
+            temp->arr_inner_index = inner_indexing;
+            temp = temp->arr_inner_index;
+        }
+        if (parser->current_token->type == TOKEN_LBRA)
+        {
+            parser_eat(parser, TOKEN_LBRA);
+            ret->var_def_val = parser_parse_expr(parser, scope, ret);
+            parser_eat(parser, TOKEN_RBRA);
+        }
+        ret->scope = scope;
+        ret->parent = parent;
+        return ret;
+        break;
+    }
+    case TOKEN_LBRA:
+    {
+        AST_T *arr = init_ast(AST_ARR_DEF, parser->current_token->line, parser->current_token->col);
+
+        parser_eat(parser, TOKEN_LBRA);
+        if (parser->current_token->type != TOKEN_RBRA)
+        {
+            arr->compound_val = calloc(1, sizeof(struct AST_STRUCT *));
+            arr->compound_val[arr->arr_size] = parser_parse_expr(parser, scope, arr);
+            arr->arr_size += 1;
+            while (parser->current_token->type == TOKEN_COMMA)
+            {
+                parser_eat(parser, TOKEN_COMMA);
+                arr->arr_size += 1;
+                arr->compound_val = realloc(arr->compound_val, arr->arr_size * sizeof(struct AST_STRUCT *));
+                arr->compound_val[arr->arr_size - 1] = parser_parse_expr(parser, scope, arr);
+            }
+        }
+        arr->scope = scope;
+        parser_eat(parser, TOKEN_RBRA);
+        return arr;
     }
     case TOKEN_STR:
     {
@@ -323,14 +380,14 @@ AST_T *parser_parse_factor(parser_T *parser, scope_T *scope, AST_T *parent)
         break;
     }
     default:
-        return init_ast(AST_NOOP);
+        return init_ast(AST_NOOP, parser->current_token->line, parser->current_token->col);
         break;
     }
 }
 
 AST_T *parser_parse_func_call(parser_T *parser, scope_T *scope)
 {
-    AST_T *ast_func_call = init_ast(AST_FUNC_CALL);
+    AST_T *ast_func_call = init_ast(AST_FUNC_CALL, parser->current_token->line, parser->current_token->col);
     ast_func_call->func_call_name = parser->prev_token->value;
     parser_eat(parser, TOKEN_LPAR);
     if (parser->current_token->type != TOKEN_RPAR)
@@ -360,7 +417,7 @@ AST_T *parser_parse_func_call(parser_T *parser, scope_T *scope)
 
 AST_T *parser_parse_func_def(parser_T *parser, scope_T *scope)
 {
-    AST_T *func_def = init_ast(AST_FUNC_DEF);
+    AST_T *func_def = init_ast(AST_FUNC_DEF, parser->current_token->line, parser->current_token->col);
     parser_eat(parser, TOKEN_ID);
     char *func_name = parser->current_token->value;
     parser_eat(parser, TOKEN_ID); // Func name
@@ -402,7 +459,7 @@ AST_T *parser_parse_func_def(parser_T *parser, scope_T *scope)
 
 AST_T *parser_parse_if_stmnt(parser_T *parser, scope_T *scope)
 {
-    AST_T *ast_if = init_ast(AST_IF_STMNT);
+    AST_T *ast_if = init_ast(AST_IF_STMNT, parser->current_token->line, parser->current_token->col);
     parser_eat(parser, TOKEN_ID); // eat the 'IF'
     parser_eat(parser, TOKEN_LPAR);
 
@@ -431,7 +488,7 @@ AST_T *parser_parse_if_stmnt(parser_T *parser, scope_T *scope)
 
 AST_T *parser_parse_return_stmnt(parser_T *parser, scope_T *scope)
 {
-    AST_T *ast_ret = init_ast(AST_RET_STMNT);
+    AST_T *ast_ret = init_ast(AST_RET_STMNT, parser->current_token->line, parser->current_token->col);
     parser_eat(parser, TOKEN_ID); // eat the 'ret'
     ast_ret->return_expr = parser_parse_expr(parser, scope, ast_ret);
 
@@ -443,22 +500,79 @@ AST_T *parser_parse_return_stmnt(parser_T *parser, scope_T *scope)
 AST_T *parser_parse_var(parser_T *parser, scope_T *scope)
 {
     char *var_name = parser->current_token->value;
+    AST_T *ast_var = init_ast(AST_VAR, parser->current_token->line, parser->current_token->col);
     parser_eat(parser, TOKEN_ID);
     if (parser->current_token->type == TOKEN_LPAR)
         return parser_parse_func_call(parser, scope);
-    AST_T *ast_var = init_ast(AST_VAR);
+    if (parser->current_token->type == TOKEN_EQ)
+        return parser_parse_var_redef(parser, scope, var_name);
+    if (parser->current_token->type == TOKEN_LSBRA)
+        return parser_parse_arr_index_assignment(parser, scope, var_name);
     ast_var->var_name = var_name;
     ast_var->scope = scope;
     return ast_var;
 }
 
+AST_T *parser_parse_arr_index_assignment(parser_T *parser, scope_T *scope, char *var_name)
+{
+    AST_T *arr_index = parser_parse_arr_index(parser, scope, var_name);
+    if (parser->current_token->type == TOKEN_EQ)
+    {
+        arr_index->type = AST_ARR_INDEX_ASSIGNMENT;
+        AST_T *temp = arr_index->arr_inner_index;
+        while (temp != NULL)
+        {
+            temp->type = AST_ARR_INDEX_ASSIGNMENT;
+            temp = temp->arr_inner_index;
+        }
+
+        parser_eat(parser, TOKEN_EQ);
+        arr_index->arr_new_val = parser_parse_expr(parser, scope, arr_index);
+    }
+    arr_index->scope = scope;
+    arr_index->global_scope = parser->scope;
+    return arr_index;
+}
+AST_T *parser_parse_arr_index(parser_T *parser, scope_T *scope, char *var_name)
+{
+    AST_T *arr_index = init_ast(AST_ARR_INDEX, parser->current_token->line, parser->current_token->col);
+    arr_index->var_def_var_name = var_name;
+    parser_eat(parser, TOKEN_LSBRA);
+    arr_index->arr_index = parser_parse_expr(parser, scope, arr_index);
+    parser_eat(parser, TOKEN_RSBRA);
+    AST_T *temp = arr_index;
+    while (parser->current_token->type == TOKEN_LSBRA)
+    {
+        AST_T *inner_indexing = init_ast(AST_ARR_INDEX, parser->current_token->line, parser->current_token->col);
+        parser_eat(parser, TOKEN_LSBRA);
+        inner_indexing->arr_index = parser_parse_expr(parser, scope, inner_indexing);
+        parser_eat(parser, TOKEN_RSBRA);
+        temp->arr_inner_index = inner_indexing;
+        temp = temp->arr_inner_index;
+    }
+    return arr_index;
+}
+
+AST_T *parser_parse_var_redef(parser_T *parser, scope_T *scope, char *var_name)
+{
+    AST_T *var_redef = init_ast(AST_VAR_REDEF, parser->current_token->line, parser->current_token->col);
+    parser_eat(parser, TOKEN_EQ);
+    AST_T *var_def_expr = parser_parse_expr(parser, scope, var_redef);
+
+    var_redef->var_def_var_name = var_name;
+    var_redef->var_def_expr = var_def_expr;
+
+    var_redef->scope = scope;
+    return var_redef;
+}
+
 AST_T *parser_parse_var_def(parser_T *parser, scope_T *scope)
 {
+    AST_T *var_def = init_ast(AST_VAR_DEF, parser->current_token->line, parser->current_token->col);
     parser_eat(parser, TOKEN_ID);
     char *var_def_name = parser->current_token->value;
     parser_eat(parser, TOKEN_ID);
     parser_eat(parser, TOKEN_EQ);
-    AST_T *var_def = init_ast(AST_VAR_DEF);
     AST_T *var_def_expr = parser_parse_expr(parser, scope, var_def);
 
     var_def->var_def_var_name = var_def_name;
@@ -470,7 +584,7 @@ AST_T *parser_parse_var_def(parser_T *parser, scope_T *scope)
 
 AST_T *parser_parse_str(parser_T *parser, scope_T *scope)
 {
-    AST_T *ast_str = init_ast(AST_STR);
+    AST_T *ast_str = init_ast(AST_STR, parser->current_token->line, parser->current_token->col);
 
     ast_str->str_val = parser->current_token->value;
     parser_eat(parser, TOKEN_STR);
@@ -479,7 +593,7 @@ AST_T *parser_parse_str(parser_T *parser, scope_T *scope)
 }
 AST_T *parser_parse_bool(parser_T *parser, scope_T *scope, int val)
 {
-    AST_T *ast_bool = init_ast(AST_BOOL);
+    AST_T *ast_bool = init_ast(AST_BOOL, parser->current_token->line, parser->current_token->col);
 
     ast_bool->is_true = val;
     parser_eat(parser, TOKEN_ID);
@@ -516,7 +630,7 @@ AST_T *parser_parse_id(parser_T *parser, scope_T *scope)
     else if (strncmp(parser->current_token->value, "NULL", 5) == 0)
     {
         parser_eat(parser, TOKEN_ID);
-        return init_ast(AST_NOOP);
+        return init_ast(AST_NOOP, parser->current_token->line, parser->current_token->col);
     }
     else
     {

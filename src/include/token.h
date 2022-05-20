@@ -28,7 +28,9 @@ typedef struct TOKEN_STRUCT
         TOKEN_LTE_COMP, // 21
         TOKEN_GTE_COMP, // 22
         TOKEN_AND,      // 23
-        TOKEN_OR        // 24
+        TOKEN_OR,       // 24
+        TOKEN_RSBRA,    // 25
+        TOKEN_LSBRA     // 26
     } type;
     char *value;
     unsigned int line;

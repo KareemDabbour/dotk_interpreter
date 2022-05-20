@@ -17,6 +17,6 @@ print(
 
 print("-------------");
 
-var f = f || True;
+f = f || True;
 
 print("f || True: " + f);

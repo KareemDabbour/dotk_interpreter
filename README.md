@@ -56,6 +56,36 @@ var x = 41;
 
 More variable declaration examples can be seen in `examples/variables.k`
 
+## Arrays
+
+Arrays containing Floats, Ints, Strings and/or Arrays can be explicitly declared or declared with a set size and default value. 
+
+### Fixed size array
+The following code containts examples of how to declare fixed size arrays in `Dot-K`:
+```py
+# [size_of_array]{default value}
+[4];         # Output: [NULL, NULL, NULL, NULL]
+[4]{0};      # Output: [0, 0, 0, 0]
+[2][2];      # Output: [[NULL, NULL], [NULL, NULL]] 
+[2][2]{0};   # Output: [[0, 0], [0, 0]] 
+[2]{[2]{0}}; # Output: [[0, 0], [0, 0]] 
+```
+
+### Explicitly declared arrays
+The following code containts examples of how to explicit arrays in `Dot-K`:
+```py
+# {Elements Separated by a Comma}
+{1, 2, 3.14, "4"}      # Output: [1, 2, 3.14, "4"]
+{[2]{"1"}, 2, 3, True} # Output: [["1", "1"], 2, 3, True]
+{{1, 2}, {3}, 4, 5}    # Output: [[1, 2], [3], 4, 5]
+```
+
+### Indexing
+Arrays in `Dot-K` can be indexed much like in Python *_without slices_*.
+For example, indexing can be done with negative numbers (`-1 referring to the end of the array`). 
+
+More array examples can be seen in `examples/arrays.k`
+
 ## Function Definitions
 
 Using the key word `def`, various functions can be defined with the `Dot-K` language.
@@ -112,7 +142,7 @@ print(bar(2)); # Output: 4.26
 
 The following code is an example of how `Dot-K` can handle simple recursion.
 
-```py js
+```py 
 def fact(x){
     if(x < 2){
         ret 1;
@@ -160,13 +190,9 @@ if("a" > "z" && 1 != 1){
 
 ## Future Features
 
-### Arrays & Array-like Structures
-
-There is currently no way to declare an array. However, it's in the works!
-
 ### While and for loops
 
-Since there are no arrays or array-like data structures in this language there was no real need for `while` and `for` loops. However, this is being worked in conjuntion with `arrays`.
+This language has no support for `while` and `for` loops natively. However, they can be simulated using recursive functions. Be that as it may, loops are in the works!
 
 ## Implementation
 

@@ -5,31 +5,36 @@ typedef struct AST_STRUCT
 {
     enum
     {
-        AST_NOOP,      // 0
-        AST_FUNC_CALL, // 1
-        AST_FUNC_DEF,  // 2
-        AST_VAR_DEF,   // 3
-        AST_VAR,       // 4
-        AST_STR,       // 5
-        AST_COMPOUND,  // 6
-        AST_INT,       // 7
-        AST_MUL,       // 8
-        AST_ADD,       // 9
-        AST_SUB,       // 10
-        AST_DIV,       // 11
-        AST_INT_DIV,   // 12
-        AST_FLOAT,     // 13
-        AST_IF_STMNT,  // 14
-        AST_EQ_COMP,   // 15
-        AST_LT_COMP,   // 16
-        AST_GT_COMP,   // 17
-        AST_LTE_COMP,  // 18
-        AST_GTE_COMP,  // 19
-        AST_AND,       // 20
-        AST_OR,        // 21
-        AST_BOOL,      // 22
-        AST_RET_STMNT, // 23
-        AST_NEQ_COMP   // 24
+        AST_NOOP,                 // 0
+        AST_FUNC_CALL,            // 1
+        AST_FUNC_DEF,             // 2
+        AST_VAR_DEF,              // 3
+        AST_VAR,                  // 4
+        AST_STR,                  // 5
+        AST_COMPOUND,             // 6
+        AST_INT,                  // 7
+        AST_MUL,                  // 8
+        AST_ADD,                  // 9
+        AST_SUB,                  // 10
+        AST_DIV,                  // 11
+        AST_INT_DIV,              // 12
+        AST_FLOAT,                // 13
+        AST_IF_STMNT,             // 14
+        AST_EQ_COMP,              // 15
+        AST_LT_COMP,              // 16
+        AST_GT_COMP,              // 17
+        AST_LTE_COMP,             // 18
+        AST_GTE_COMP,             // 19
+        AST_AND,                  // 20
+        AST_OR,                   // 21
+        AST_BOOL,                 // 22
+        AST_RET_STMNT,            // 23
+        AST_NEQ_COMP,             // 24
+        AST_ARR,                  // 25
+        AST_ARR_DEF,              // 26
+        AST_VAR_REDEF,            // 27
+        AST_ARR_INDEX_ASSIGNMENT, // 28
+        AST_ARR_INDEX             // 29
     } type;
 
     struct SCOPE_STRUCT *scope;
@@ -37,7 +42,7 @@ typedef struct AST_STRUCT
 
     struct AST_STRUCT *parent;
 
-    // AST VAR DEF
+    // AST VAR DEF & VAR REDEF
     char *var_def_var_name;
     struct AST_STRUCT *var_def_val;
     struct AST_STRUCT *var_def_expr;
@@ -66,7 +71,7 @@ typedef struct AST_STRUCT
     float float_val;
 
     // AST MUL/ADD/DIV/INT DIV
-    // AST EQ/LT/GT/LTE/GTE
+    // AST EQ/LT/GT/LTE/GTE/NEQ
     struct AST_STRUCT *op_left;
     struct AST_STRUCT *op_right;
 
@@ -84,13 +89,28 @@ typedef struct AST_STRUCT
 
     // AST ARR
     struct AST_STRUCT **arr;
-    size_t arr_len;
+    size_t arr_size;
+
+    // AST ARR DEF
+    struct AST_STRUCT *arr_size_expr;
+
+    // AST ARR INDEX
+    struct AST_STRUCT *arr_index;
+    struct AST_STRUCT *arr_new_val;
+
+    struct AST_STRUCT *arr_inner_index;
 
     // AST BOOL
     int is_true;
 
+    // Line and Column values
+    unsigned int line;
+    unsigned int col;
+
 } AST_T;
 
-AST_T *init_ast(int type);
+AST_T *init_ast(int type, unsigned int line, unsigned int col);
+
+AST_T *ast_visit(AST_T *node);
 
 #endif
