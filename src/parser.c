@@ -578,6 +578,7 @@ AST_T *parser_parse_var_def(parser_T *parser, scope_T *scope)
     var_def->var_def_var_name = var_def_name;
     var_def->var_def_expr = var_def_expr;
 
+    var_def->global_scope = parser->scope;
     var_def->scope = scope;
     return var_def;
 }
@@ -587,6 +588,7 @@ AST_T *parser_parse_str(parser_T *parser, scope_T *scope)
     AST_T *ast_str = init_ast(AST_STR, parser->current_token->line, parser->current_token->col);
 
     ast_str->str_val = parser->current_token->value;
+    ast_str->arr_size = strnlen(ast_str->str_val, MAX_STR_CHAR);
     parser_eat(parser, TOKEN_STR);
     ast_str->scope = scope;
     return ast_str;

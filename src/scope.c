@@ -39,7 +39,7 @@ AST_T *scope_get_func_def(scope_T *scope, const char *fname)
     {
         AST_T *func_def = scope->function_definitions[i];
 
-        if (strncmp(func_def->func_name, fname, strnlen(fname, 101)) == 0)
+        if (strncmp(func_def->func_name, fname, MAX_STR_CHAR) == 0)
         {
             return func_def;
         }
@@ -72,7 +72,7 @@ AST_T *scope_get_var_def(scope_T *scope, const char *vname)
     for (int i = scope->variable_definitions_size - 1; i > -1; i--)
     {
         AST_T *vdef = scope->variable_definitions[i];
-        if (strncmp(vdef->var_def_var_name, vname, strnlen(vname, 101)) == 0)
+        if (strncmp(vdef->var_def_var_name, vname, MAX_STR_CHAR) == 0)
             return vdef;
     }
     return init_ast(AST_NOOP, 0, 0);
@@ -84,7 +84,7 @@ AST_T *scope_replace_var_def(scope_T *scope, AST_T *var_def)
     for (int i = scope->variable_definitions_size - 1; i > -1; i--)
     {
         AST_T *vdef = scope->variable_definitions[i];
-        if (strncmp(vdef->var_def_var_name, vname, strnlen(vname, 101)) == 0)
+        if (strncmp(vdef->var_def_var_name, vname, MAX_STR_CHAR) == 0)
         {
             scope->variable_definitions[i] = var_def;
             return var_def;
@@ -99,7 +99,7 @@ int scope_rem_var_def(scope_T *scope, const char *vname)
     for (int i = scope->variable_definitions_size - 1; i > -1; i--)
     {
         AST_T *vdef = scope->variable_definitions[i];
-        if (strncmp(vdef->var_def_var_name, vname, strnlen(vname, 101)) == 0)
+        if (strncmp(vdef->var_def_var_name, vname, MAX_STR_CHAR) == 0)
         {
             remove_elem(scope, i);
             return 1;

@@ -1,6 +1,8 @@
 #ifndef AST_H
 #include <stdlib.h>
 #define AST_H
+#define MAX_STR_CHAR 2000
+#define MAX_NUM_SPACE 20
 typedef struct AST_STRUCT
 {
     enum

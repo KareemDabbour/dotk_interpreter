@@ -3,8 +3,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#define MAX_STR_CHAR 2000
-#define MAX_NUM_SPACE 20
 
 static AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size);
 static AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size);
@@ -986,17 +984,15 @@ AST_T *ast_visit_arr_index(AST_T *node)
         arr->global_scope = node->global_scope;
     }
 
-    if (arr->type != AST_ARR)
+    if (arr->type != AST_ARR && arr->type != AST_STR)
     {
-        printf("%d:%d -- Cannot index '%s' with type '%s'\n",
+        printf("%d:%d -- '%s' type var '%s' is not subscriptable\n",
                node->line,
                node->col,
-               node->var_def_var_name,
-               enum_names[arr->type]);
+               enum_names[arr->type],
+               node->var_def_var_name);
         exit(1);
     }
-    for (int i = 0; i < arr->arr_size; i++)
-        arr->arr[i]->scope = node->scope;
 
     AST_T *ast_index = ast_visit(node->arr_index);
     if (ast_index->type != AST_INT)
@@ -1014,30 +1010,44 @@ AST_T *ast_visit_arr_index(AST_T *node)
         index = ast_index->int_val;
     if (index < 0 || index >= arr->arr_size)
     {
-        printf("%d:%d -- Index Out of Bounds Error '%s' has size %ld but %ld was passed in\n",
+        printf("%d:%d -- Index Out of Bounds Error. Var '%s' has size %ld but %d was passed in\n",
                node->line,
                node->col,
                node->var_def_var_name,
                arr->arr_size,
-               index);
+               ast_index->int_val);
         exit(1);
     }
-    AST_T *ret = ast_visit(arr->arr[index]);
-    if (node->arr_inner_index != NULL)
+    AST_T *ret;
+    if (arr->type == AST_ARR)
     {
-        if (ret->type != AST_ARR)
+        for (int i = 0; i < arr->arr_size; i++)
+            arr->arr[i]->scope = node->scope;
+        ret = ast_visit(arr->arr[index]);
+        if (node->arr_inner_index != NULL)
         {
-            printf("%d:%d -- Cannot index array with type '%s'\n",
-                   node->line,
-                   node->col,
-                   enum_names[ret->type]);
-            exit(1);
+            if (ret->type != AST_ARR)
+            {
+                printf("%d:%d -- '%s' type is not subscriptable\n",
+                       node->line,
+                       node->col,
+                       enum_names[ret->type]);
+                exit(1);
+            }
+            node->arr_inner_index->arr = ret->arr;
+            node->arr_inner_index->arr_size = ret->arr_size;
+            return ast_visit(node->arr_inner_index);
         }
-        node->arr_inner_index->arr = ret->arr;
-        node->arr_inner_index->arr_size = ret->arr_size;
-        return ast_visit(node->arr_inner_index);
     }
-
+    else if (arr->type == AST_STR)
+    {
+        ret = init_ast(AST_STR, node->line, node->col);
+        ret->str_val = calloc(2, sizeof(char));
+        sprintf(ret->str_val, "%c", arr->str_val[index]);
+        ret->str_val[1] = '\0';
+        ret->scope = node->scope;
+        ret->parent = node->parent;
+    }
     return ret;
 }
 
@@ -1072,11 +1082,11 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
 
     if (arr->type != AST_ARR)
     {
-        printf("%d:%d -- Cannot index '%s' with type '%s'\n",
+        printf("%d:%d -- '%s' type var '%s' does not support item assignment \n",
                node->line,
                node->col,
-               node->var_def_var_name,
-               enum_names[arr->type]);
+               enum_names[arr->type],
+               node->var_def_var_name);
         exit(1);
     }
     AST_T *ast_index = ast_visit(node->arr_index);
@@ -1109,7 +1119,7 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
         AST_T *inner_arr = ast_visit(arr->arr[index]);
         if (inner_arr->type != AST_ARR)
         {
-            printf("%d:%d -- Cannot index array with type '%s'\n",
+            printf("%d:%d -- '%s' type is not subscriptable\n",
                    node->line,
                    node->col,
                    enum_names[inner_arr->type]);
@@ -1703,7 +1713,7 @@ AST_T *ast_visit_not_eq_comp(AST_T *node)
         case AST_STR:
         {
             AST_T *ret = init_ast(AST_BOOL, left->line, left->col);
-            ret->is_true = strncmp(left->str_val, right->str_val, strnlen(left->str_val, MAX_STR_CHAR)) != 0;
+            ret->is_true = strncmp(left->str_val, right->str_val, MAX_STR_CHAR) != 0;
             return ret;
         }
         case AST_ARR:
