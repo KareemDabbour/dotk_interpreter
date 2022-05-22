@@ -31,7 +31,7 @@ static AST_T *parser_parse_str(parser_T *parser, scope_T *scope);
 
 static AST_T *parser_parse_id(parser_T *parser, scope_T *scope);
 
-const char *token_names[27] = {
+const char *token_names[28] = {
     "IDENTIFIER",                       // 0
     "EQUALS",                           // 1
     "STRING",                           // 2
@@ -58,7 +58,8 @@ const char *token_names[27] = {
     "AND COMPARATOR",                   // 23
     "OR COMPARATOR",                    // 24
     "LEFT SQUARE BRACKET",              // 25
-    "RIGHT SQUARE BRACKET"              // 26
+    "RIGHT SQUARE BRACKET",             // 26
+    "MODULUS OPERATOR"                  // 27
 };
 
 static scope_T *get_node_scope(parser_T *parser, AST_T *node)
@@ -144,7 +145,8 @@ AST_T *parser_parse_expr(parser_T *parser, scope_T *scope, AST_T *parent)
     while ((parser->current_token->type == TOKEN_PLUS) ||
            (parser->current_token->type == TOKEN_SUB) ||
            (parser->current_token->type == TOKEN_AND) ||
-           (parser->current_token->type == TOKEN_OR))
+           (parser->current_token->type == TOKEN_OR) ||
+           (parser->current_token->type == TOKEN_MOD))
     {
         AST_T *temp = init_ast(AST_NOOP, parser->current_token->line, parser->current_token->col);
         switch (parser->current_token->type)
@@ -171,6 +173,13 @@ AST_T *parser_parse_expr(parser_T *parser, scope_T *scope, AST_T *parent)
         {
             temp->type = AST_OR;
             parser_eat(parser, TOKEN_OR);
+            break;
+        }
+        case TOKEN_MOD:
+
+        {
+            temp->type = AST_MOD;
+            parser_eat(parser, TOKEN_MOD);
             break;
         }
         default:

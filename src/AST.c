@@ -24,6 +24,7 @@ static AST_T *ast_visit_float(AST_T *node);
 static AST_T *ast_visit_add(AST_T *node);
 static AST_T *ast_visit_sub(AST_T *node);
 static AST_T *ast_visit_mul(AST_T *node);
+static AST_T *ast_visit_mod(AST_T *node);
 static AST_T *ast_visit_div(AST_T *node);
 static AST_T *ast_visit_int_div(AST_T *node);
 static AST_T *ast_visit_if_statement(AST_T *node);
@@ -37,7 +38,7 @@ static AST_T *ast_visit_gt_comp(AST_T *node);
 static AST_T *ast_visit_lte_comp(AST_T *node);
 static AST_T *ast_visit_gte_comp(AST_T *node);
 
-const char *enum_names[30] = {
+const char *enum_names[31] = {
     "NULL",
     "FUNCTION CALL",
     "FUNCTION DEFINITION",
@@ -67,7 +68,8 @@ const char *enum_names[30] = {
     "ARRAY DECLARATION",
     "VARIABLE REDEFINITION",
     "ARRAY INDEXING ASSIGNMENT",
-    "ARRAY INDEXING"};
+    "ARRAY INDEXING",
+    "MODULUS"};
 
 void print_arr(AST_T *arr)
 {
@@ -754,6 +756,8 @@ AST_T *ast_visit(AST_T *node)
         return ast_visit_or(node);
     case AST_MUL:
         return ast_visit_mul(node);
+    case AST_MOD:
+        return ast_visit_mod(node);
     case AST_DIV:
         return ast_visit_div(node);
     case AST_INT_DIV:
@@ -1551,6 +1555,41 @@ AST_T *ast_visit_sub(AST_T *node)
     else
     {
         printf("%d:%d -- Cannot subtract objects of type '%s' and '%s'\n",
+               left->line,
+               left->col,
+               enum_names[left->type],
+               enum_names[right->type]);
+        exit(1);
+    }
+}
+
+AST_T *ast_visit_mod(AST_T *node)
+{
+    AST_T *left = ast_visit(node->op_left);
+    AST_T *right = ast_visit(node->op_right);
+    if (left->type == right->type)
+    {
+        switch (left->type)
+        {
+        case AST_INT:
+        {
+            AST_T *ret = init_ast(AST_INT, left->line, left->col);
+            ret->int_val = left->int_val % right->int_val;
+            return ret;
+        }
+        default:
+        {
+            printf("%d:%d -- Cannot perfom modulo on objects of type '%s'\n",
+                   left->line,
+                   left->col,
+                   enum_names[left->type]);
+            exit(1);
+        }
+        }
+    }
+    else
+    {
+        printf("%d:%d -- Cannot perfom modulo on objects of type '%s' and '%s'\n",
                left->line,
                left->col,
                enum_names[left->type],

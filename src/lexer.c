@@ -142,6 +142,9 @@ token_T *lexer_get_next_token(lexer_T *lexer)
         case '*':
             return lexer_advance_with_token(lexer, init_token(TOKEN_MUL, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
 
+        case '%':
+            return lexer_advance_with_token(lexer, init_token(TOKEN_MOD, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
+
         case '&':
         {
             if (lexer_peek(lexer) == '&')
@@ -223,12 +226,9 @@ token_T *lexer_get_next_token(lexer_T *lexer)
             {
                 return lexer_advance_with_token(lexer, init_token(TOKEN_DIV, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
             }
-
-            break;
         }
         case '"':
             return lexer_collect_string(lexer);
-            break;
         case '\0':
             break;
         default:

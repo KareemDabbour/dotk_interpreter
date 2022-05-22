@@ -36,7 +36,8 @@ typedef struct AST_STRUCT
         AST_ARR_DEF,              // 26
         AST_VAR_REDEF,            // 27
         AST_ARR_INDEX_ASSIGNMENT, // 28
-        AST_ARR_INDEX             // 29
+        AST_ARR_INDEX,            // 29
+        AST_MOD                   // 30
     } type;
 
     struct SCOPE_STRUCT *scope;
