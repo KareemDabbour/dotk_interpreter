@@ -144,7 +144,7 @@
 					"name":"keyword.operator.logical.dotk"
 				},
 				{
-					"match": "\\+|-|/|//|\\*",
+					"match": "\\+|-|/|//|\\*|%",
 					"name":"keyword.operator.dotk"
 				}
 			]
