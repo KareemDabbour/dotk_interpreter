@@ -1,4 +1,4 @@
-def tower(x, src,dest,aux){
+def tower(x, src, dest, aux){
     if(x==0){
         ret;
     };
