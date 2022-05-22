@@ -1130,16 +1130,26 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
 
 AST_T *ast_visit_var_redef(AST_T *node)
 {
-    node->var_def_val = ast_visit(node->var_def_expr);
-    if (scope_replace_var_def(node->scope, node)->type == AST_NOOP)
+    AST_T *vardef = scope_get_var_def(node->scope, node->var_def_var_name);
+    AST_T *temp = node;
+    while (vardef->type == AST_NOOP && temp->parent != (void *)0)
+    {
+        vardef = scope_get_var_def(temp->scope, node->var_def_var_name);
+        temp = temp->parent;
+    }
+    if (vardef->type == AST_NOOP)
     {
         printf("%d:%d -- Undefined variable '%s'\n",
                node->line,
                node->col,
-               node->var_def_var_name);
+               node->var_name);
         exit(1);
     }
-    return node;
+
+    vardef->var_def_val = ast_visit(node->var_def_expr);
+    scope_replace_var_def(vardef->scope, vardef);
+
+    return vardef;
 }
 
 AST_T *ast_visit_var(AST_T *node)
