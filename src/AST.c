@@ -586,6 +586,7 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                                     break;
                                 }
                                 default:
+                                    printf(KRED);
                                     printf("%d:%d -- Cannot compare objects of type '%s'\n",
                                            x->line,
                                            x->col,
@@ -605,6 +606,7 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                             }
                             else
                             {
+                                printf(KRED);
                                 printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                                        x_arr_elem->line,
                                        x_arr_elem->col,
@@ -619,6 +621,7 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                     break;
                 }
                 default:
+                    printf(KRED);
                     printf("%d:%d -- Cannot compare objects of type '%s'\n",
                            x_elem->line,
                            x_elem->col,
@@ -638,6 +641,7 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
             }
             else
             {
+                printf(KRED);
                 printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                        x_elem->line,
                        x_elem->col,
@@ -656,6 +660,7 @@ AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size)
 {
     if (args_size == 0 || args_size > 1)
     {
+        printf(KRED);
         printf("%d:%d -- 'len()' takes exactly one argument (%ld given)\n",
                node->line,
                node->col,
@@ -676,6 +681,7 @@ AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size)
         break;
 
     default:
+        printf(KRED);
         printf("%d:%d -- Cannot get length of type '%s'.", node->line, node->col, enum_names[visited_ast->type]);
         exit(1);
     }
@@ -684,6 +690,12 @@ AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size)
 
 AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size)
 {
+    if (args_size == 0)
+    {
+        printf(KYEL);
+        printf("%d:%d -- WAENING: Calling 'print()' with no args\n", node->line, node->col);
+        printf(KNRM);
+    }
     for (size_t i = 0; i < args_size; i++)
     {
         AST_T *visited_ast = ast_visit(args[i]);
@@ -724,8 +736,13 @@ AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size)
 
 AST_T *ast_visit(AST_T *node)
 {
-    // For debugging
-    // printf("Visiting: %s\n", enum_names[node->type]);
+// For debugging
+#if DEBUG
+    printf(KCYN);
+    printf("Visiting: %s\n", enum_names[node->type]);
+    printf(KNRM);
+#endif
+
     switch (node->type)
     {
     case AST_FUNC_CALL:
@@ -791,6 +808,7 @@ AST_T *ast_visit(AST_T *node)
     case AST_NOOP:
         return node;
     default:
+        printf(KRED);
         printf("%d:%d -- Uncaught statement of type: '%s'\n", node->line, node->col, enum_names[node->type]);
         exit(1);
     }
@@ -808,6 +826,7 @@ AST_T *ast_visit_func_call(AST_T *node)
         node->func_call_name);
     if (func_def->type == AST_NOOP)
     {
+        printf(KRED);
         printf("%d:%d -- '%s' is not defined.\n",
                node->line,
                node->col,
@@ -816,6 +835,7 @@ AST_T *ast_visit_func_call(AST_T *node)
     }
     if (func_def->func_def_args_size != node->func_call_args_size)
     {
+        printf(KRED);
         printf("%d:%d -- '%s' expected %ld args but recieved %ld.\n",
                node->line,
                node->col,
@@ -915,6 +935,7 @@ AST_T *ast_visit_arr_def(AST_T *node)
     AST_T *size = ast_visit(node->arr_size_expr);
     if (size->type != AST_INT)
     {
+        printf(KRED);
         printf("%d:%d -- Can't create an array with size of type '%s' must be 'INT' \n",
                node->line,
                node->col,
@@ -923,6 +944,7 @@ AST_T *ast_visit_arr_def(AST_T *node)
     }
     if (size->int_val < 0)
     {
+        printf(KRED);
         printf("%d:%d -- Can't create an array with size below 0\n",
                node->line,
                node->col);
@@ -970,6 +992,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
         }
         if (aux->type == AST_NOOP)
         {
+            printf(KRED);
             printf("%d:%d -- Undefined variable '%s'\n",
                    node->line,
                    node->col,
@@ -990,6 +1013,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
 
     if (arr->type != AST_ARR && arr->type != AST_STR)
     {
+        printf(KRED);
         printf("%d:%d -- '%s' type var '%s' is not subscriptable\n",
                node->line,
                node->col,
@@ -1001,6 +1025,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
     AST_T *ast_index = ast_visit(node->arr_index);
     if (ast_index->type != AST_INT)
     {
+        printf(KRED);
         printf("%d:%d -- Can't index an array with type '%s' must be 'INT' \n",
                node->line,
                node->col,
@@ -1014,6 +1039,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
         index = ast_index->int_val;
     if (index < 0 || index >= arr->arr_size)
     {
+        printf(KRED);
         printf("%d:%d -- Index Out of Bounds Error. Var '%s' has size %ld but %d was passed in\n",
                node->line,
                node->col,
@@ -1032,6 +1058,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
         {
             if (ret->type != AST_ARR)
             {
+                printf(KRED);
                 printf("%d:%d -- '%s' type is not subscriptable\n",
                        node->line,
                        node->col,
@@ -1069,6 +1096,7 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
         }
         if (aux->type == AST_NOOP)
         {
+            printf(KRED);
             printf("%d:%d -- Undefined variable '%s'\n",
                    node->line,
                    node->col,
@@ -1086,6 +1114,7 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
 
     if (arr->type != AST_ARR)
     {
+        printf(KRED);
         printf("%d:%d -- '%s' type var '%s' does not support item assignment \n",
                node->line,
                node->col,
@@ -1096,6 +1125,7 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
     AST_T *ast_index = ast_visit(node->arr_index);
     if (ast_index->type != AST_INT)
     {
+        printf(KRED);
         printf("%d:%d -- Can't index an array with type '%s' must be 'INT' \n",
                node->line,
                node->col,
@@ -1109,6 +1139,7 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
         index = ast_index->int_val;
     if (index < 0 || index >= arr->arr_size)
     {
+        printf(KRED);
         printf("%d:%d -- Index Out of Bounds Error '%s' has size %ld but %ld was passed in\n",
                node->line,
                node->col,
@@ -1123,6 +1154,7 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
         AST_T *inner_arr = ast_visit(arr->arr[index]);
         if (inner_arr->type != AST_ARR)
         {
+            printf(KRED);
             printf("%d:%d -- '%s' type is not subscriptable\n",
                    node->line,
                    node->col,
@@ -1153,6 +1185,7 @@ AST_T *ast_visit_var_redef(AST_T *node)
     }
     if (vardef->type == AST_NOOP)
     {
+        printf(KRED);
         printf("%d:%d -- Undefined variable '%s'\n",
                node->line,
                node->col,
@@ -1178,6 +1211,7 @@ AST_T *ast_visit_var(AST_T *node)
     }
     if (vardef->type == AST_NOOP)
     {
+        printf(KRED);
         printf("%d:%d -- Undefined variable '%s'\n",
                node->line,
                node->col,
@@ -1275,6 +1309,7 @@ AST_T *ast_visit_add(AST_T *node)
 
         default:
         {
+            printf(KRED);
             printf("%d:%d -- Cannot add objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -1305,6 +1340,7 @@ AST_T *ast_visit_add(AST_T *node)
         }
         case AST_ARR:
         {
+            printf(KRED);
             printf("%d:%d -- Can only concatenate array (not 'FLOAT') to array\n",
                    left->line,
                    left->col);
@@ -1316,7 +1352,6 @@ AST_T *ast_visit_add(AST_T *node)
     }
     else if (left->type == AST_INT)
     {
-
         switch (right->type)
         {
         case AST_FLOAT:
@@ -1337,6 +1372,7 @@ AST_T *ast_visit_add(AST_T *node)
         }
         case AST_ARR:
         {
+            printf(KRED);
             printf("%d:%d -- Can only concatenate array (not 'INT') to array\n",
                    left->line,
                    left->col);
@@ -1393,11 +1429,6 @@ AST_T *ast_visit_add(AST_T *node)
             ret->str_val = strcat(str, arr_str);
             free(arr_str);
             return ret;
-
-            printf("%d:%d -- Can only concatenate array (not 'STR') to array\n",
-                   left->line,
-                   left->col);
-            exit(1);
         }
         default:
             break;
@@ -1417,6 +1448,7 @@ AST_T *ast_visit_add(AST_T *node)
             strncpy(ret->str_val, str, len);
             return ret;
         }
+        printf(KRED);
         printf("%d:%d -- Can only concatenate array (not '%s') to array\n",
                left->line,
                left->col,
@@ -1449,6 +1481,7 @@ AST_T *ast_visit_add(AST_T *node)
         }
         default:
         {
+            printf(KRED);
             printf("%d:%d -- bad operand type for unary operator '+': '%s'\n",
                    right->line,
                    right->col,
@@ -1467,6 +1500,7 @@ AST_T *ast_visit_add(AST_T *node)
         strncpy(ret->str_val, str, len);
         return ret;
     }
+    printf(KRED);
     printf("%d:%d -- Cannot add objects of type '%s' and '%s'\n",
            left->line,
            left->col,
@@ -1497,6 +1531,7 @@ AST_T *ast_visit_sub(AST_T *node)
         }
 
         default:
+            printf(KRED);
             printf("%d:%d -- Cannot subtract objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -1535,7 +1570,7 @@ AST_T *ast_visit_sub(AST_T *node)
         }
         default:
         {
-
+            printf(KRED);
             printf("%d:%d -- bad operand type for unary operator '-': '%s'\n",
                    right->line,
                    right->col,
@@ -1546,6 +1581,7 @@ AST_T *ast_visit_sub(AST_T *node)
     }
     else if (right->type == AST_NOOP)
     {
+        printf(KRED);
         printf("%d:%d -- bad operand type for unary operator '-': '%s'\n",
                right->line,
                right->col,
@@ -1554,6 +1590,7 @@ AST_T *ast_visit_sub(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot subtract objects of type '%s' and '%s'\n",
                left->line,
                left->col,
@@ -1579,6 +1616,7 @@ AST_T *ast_visit_mod(AST_T *node)
         }
         default:
         {
+            printf(KRED);
             printf("%d:%d -- Cannot perfom modulo on objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -1589,6 +1627,7 @@ AST_T *ast_visit_mod(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot perfom modulo on objects of type '%s' and '%s'\n",
                left->line,
                left->col,
@@ -1620,6 +1659,7 @@ AST_T *ast_visit_mul(AST_T *node)
         }
         default:
         {
+            printf(KRED);
             printf("%d:%d -- Cannot multiply objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -1642,6 +1682,7 @@ AST_T *ast_visit_mul(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot multiply objects of type '%s' and '%s'\n",
                left->line,
                left->col,
@@ -1664,6 +1705,7 @@ AST_T *ast_visit_div(AST_T *node)
             AST_T *ret = init_ast(AST_FLOAT, left->line, left->col);
             if (right->int_val == 0)
             {
+                printf(KRED);
                 printf("%d:%d -- Zero Division Error: Cannot Divide by 0.\n", right->line, right->col);
                 exit(1);
             }
@@ -1675,6 +1717,7 @@ AST_T *ast_visit_div(AST_T *node)
             AST_T *ret = init_ast(AST_FLOAT, left->line, left->col);
             if (right->float_val == 0)
             {
+                printf(KRED);
                 printf("%d:%d -- Zero Division Error: Cannot Divide by 0.\n", right->line, right->col);
                 exit(1);
             }
@@ -1683,6 +1726,7 @@ AST_T *ast_visit_div(AST_T *node)
         }
 
         default:
+            printf(KRED);
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -1695,6 +1739,7 @@ AST_T *ast_visit_div(AST_T *node)
         AST_T *ret = init_ast(AST_FLOAT, left->line, left->col);
         if (right->int_val == 0)
         {
+            printf(KRED);
             printf("%d:%d -- Zero Division Error: Cannot Divide by 0.\n", right->line, right->col);
             exit(1);
         }
@@ -1706,6 +1751,7 @@ AST_T *ast_visit_div(AST_T *node)
         AST_T *ret = init_ast(AST_FLOAT, left->line, left->col);
         if (right->float_val == 0)
         {
+            printf(KRED);
             printf("%d:%d -- Zero Division Error: Cannot Divide by 0.\n", right->line, right->col);
             exit(1);
         }
@@ -1714,6 +1760,7 @@ AST_T *ast_visit_div(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col,
@@ -1762,6 +1809,7 @@ AST_T *ast_visit_not_eq_comp(AST_T *node)
             return ret;
         }
         default:
+            printf(KRED);
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -1783,6 +1831,7 @@ AST_T *ast_visit_not_eq_comp(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col,
@@ -1831,6 +1880,7 @@ AST_T *ast_visit_eq_comp(AST_T *node)
             return ret;
         }
         default:
+            printf(KRED);
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -1852,6 +1902,7 @@ AST_T *ast_visit_eq_comp(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col,
@@ -1901,6 +1952,7 @@ AST_T *ast_visit_lt_comp(AST_T *node)
         }
         default:
         {
+            printf(KRED);
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -1923,6 +1975,7 @@ AST_T *ast_visit_lt_comp(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col,
@@ -1972,6 +2025,7 @@ AST_T *ast_visit_gt_comp(AST_T *node)
         }
         default:
         {
+            printf(KRED);
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -1994,6 +2048,7 @@ AST_T *ast_visit_gt_comp(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col,
@@ -2043,6 +2098,7 @@ AST_T *ast_visit_lte_comp(AST_T *node)
         }
         default:
         {
+            printf(KRED);
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -2065,6 +2121,7 @@ AST_T *ast_visit_lte_comp(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col, enum_names[left->type],
@@ -2113,6 +2170,7 @@ AST_T *ast_visit_gte_comp(AST_T *node)
         }
         default:
         {
+            printf(KRED);
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -2135,6 +2193,7 @@ AST_T *ast_visit_gte_comp(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col, enum_names[left->type],
@@ -2165,6 +2224,7 @@ AST_T *ast_visit_int_div(AST_T *node)
         }
 
         default:
+            printf(KRED);
             printf("%d:%d -- Cannot divide objects of type '%s'\n",
                    left->line,
                    left->col,
@@ -2186,6 +2246,7 @@ AST_T *ast_visit_int_div(AST_T *node)
     }
     else
     {
+        printf(KRED);
         printf("%d:%d -- Cannot divide objects of type '%s' and '%s'\n",
                left->line,
                left->col,

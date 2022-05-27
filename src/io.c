@@ -20,6 +20,7 @@ char *get_file_contents(const char *filepath)
         fclose(f);
         return buffer;
     }
+    printf("\033[31m");
     printf("Error reading file: %s\n", filepath);
     exit(1);
 }

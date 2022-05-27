@@ -3,6 +3,18 @@
 #define AST_H
 #define MAX_STR_CHAR 2000
 #define MAX_NUM_SPACE 20
+#define DEBUG 0
+#ifndef KRED
+#define KRED "\033[31m"
+#endif
+
+#define KYEL "\033[33m"
+#define KCYN "\033[36m"
+
+#ifndef KNRM
+#define KNRM "\033[0m"
+#endif
+
 typedef struct AST_STRUCT
 {
     enum

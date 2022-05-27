@@ -17,7 +17,13 @@ int main(int argc, char *argv[])
     parser_T *parser = init_parser(lexer);
 
     AST_T *root = parser_parse(parser, parser->scope);
-    ast_visit(root);
 
+#if DEBUG
+    printf(KCYN);
+    printf("-- DEBUG ENABLED --\n");
+    printf(KNRM);
+#endif
+
+    ast_visit(root);
     return 0;
 }

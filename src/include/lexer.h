@@ -1,6 +1,13 @@
 #ifndef LEXER_H
 #define LEXER_H
 #include "token.h"
+#ifndef KRED
+#define KRED "\033[31m"
+#endif
+
+#ifndef KNRM
+#define KNRM "\033[0m"
+#endif
 typedef struct LEXER_STRUCT
 {
     char c;

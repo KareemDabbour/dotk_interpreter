@@ -57,7 +57,9 @@ void lexer_skip_block_comments(lexer_T *lexer)
     }
     if (lexer->index == lexer->len)
     {
+        printf(KRED);
         printf("%d:%d -- Unclosed block comment. Use '~' on both sides to open and close a comment\n", start_line, start_col);
+        exit(1);
     }
     lexer_advance(lexer);
 }
@@ -86,10 +88,12 @@ char lexer_peek(lexer_T *lexer)
 
 token_T *lexer_get_next_token(lexer_T *lexer)
 {
+    char *str;
     while (lexer->c != '\0' && lexer->index < lexer->len)
     {
         if (lexer->c == '~')
             lexer_skip_block_comments(lexer);
+
         if (lexer->c == '#')
             lexer_skip_comments(lexer);
 
@@ -98,13 +102,16 @@ token_T *lexer_get_next_token(lexer_T *lexer)
 
         if (isalpha(lexer->c))
             return lexer_collect_id(lexer);
+
         if (isdigit(lexer->c))
             return lexer_collect_number(lexer);
+
         switch (lexer->c)
         {
         case '~':
             lexer_skip_block_comments(lexer);
             break;
+
         case '#':
             lexer_skip_comments(lexer);
             break;
@@ -150,12 +157,12 @@ token_T *lexer_get_next_token(lexer_T *lexer)
             if (lexer_peek(lexer) == '&')
             {
                 lexer_advance(lexer);
-                return lexer_advance_with_token(lexer, init_token(TOKEN_AND, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
+                return lexer_advance_with_token(lexer, init_token(TOKEN_AND, "&&", lexer->line, lexer->col));
             }
             else
             {
+                printf(KRED);
                 printf("%d:%d -- Unexpected token: '%c' expected '&'\n", lexer->line, lexer->col, lexer->c);
-
                 exit(1);
             }
         }
@@ -164,10 +171,11 @@ token_T *lexer_get_next_token(lexer_T *lexer)
             if (lexer_peek(lexer) == '|')
             {
                 lexer_advance(lexer);
-                return lexer_advance_with_token(lexer, init_token(TOKEN_OR, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
+                return lexer_advance_with_token(lexer, init_token(TOKEN_OR, "||", lexer->line, lexer->col));
             }
             else
             {
+                printf(KRED);
                 printf("%d:%d -- Unexpected token: '%c' expected '|'\n", lexer->line, lexer->col, lexer->c);
                 exit(1);
             }
@@ -191,6 +199,7 @@ token_T *lexer_get_next_token(lexer_T *lexer)
             }
             else
             {
+                printf(KRED);
                 printf("%d:%d -- Unexpected token: '%c' expected '=' after the '!'\n", lexer->line, lexer->col, lexer->c);
                 exit(1);
             }
@@ -233,6 +242,7 @@ token_T *lexer_get_next_token(lexer_T *lexer)
             break;
         default:
         {
+            printf(KRED);
             printf("%d:%d -- Unexpected token '%c' exiting\n", lexer->line, lexer->col, lexer->c);
             exit(1);
         }
@@ -259,9 +269,11 @@ token_T *lexer_collect_string(lexer_T *lexer)
         char *s = lexer_get_current_as_string(lexer);
         val = realloc(val, strlen(val) + strlen(s) + 1 * sizeof(char));
         strcat(val, s);
+        free(s);
         lexer_advance(lexer);
         if (lexer->c == '\0')
         {
+            printf(KRED);
             printf("%d:%d -- Unexpected token: End of File. Expected '\"'\n", lexer->line, lexer->col);
             exit(1);
         }
@@ -282,6 +294,7 @@ token_T *lexer_collect_number(lexer_T *lexer)
         char *s = lexer_get_current_as_string(lexer);
         val = realloc(val, strlen(val) + strlen(s) + 1 * sizeof(char));
         strcat(val, s);
+        free(s);
         lexer_advance(lexer);
     }
     if (lexer->c == '.')
@@ -289,12 +302,14 @@ token_T *lexer_collect_number(lexer_T *lexer)
         char *s = lexer_get_current_as_string(lexer);
         val = realloc(val, strlen(val) + strlen(s) + 1 * sizeof(char));
         strcat(val, s);
+        free(s);
         lexer_advance(lexer);
         while (isdigit(lexer->c))
         {
             char *s = lexer_get_current_as_string(lexer);
             val = realloc(val, strlen(val) + strlen(s) + 1 * sizeof(char));
             strcat(val, s);
+            free(s);
             lexer_advance(lexer);
         }
         return init_token(TOKEN_FLOAT, val, lexer->line, start_col);
@@ -316,6 +331,7 @@ token_T *lexer_collect_id(lexer_T *lexer)
         char *s = lexer_get_current_as_string(lexer);
         val = realloc(val, strlen(val) + strlen(s) + 1 * sizeof(char));
         strcat(val, s);
+        free(s);
         lexer_advance(lexer);
     }
 
@@ -333,6 +349,5 @@ char *lexer_get_current_as_string(lexer_T *lex)
     char *str = calloc(2, sizeof(char));
     str[0] = lex->c;
     str[1] = '\0';
-
     return str;
 }
