@@ -31,7 +31,7 @@
 		"ctrl-statements":{
 			"patterns":[{
 				"name":"keyword.control.dotk",
-                "match":"\\b(if|else|var|def|ret)\\b"
+                "match":"\\b(if|else|var|def|ret|while|break)\\b"
 			}]
 		},
 		"numbers":{
