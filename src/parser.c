@@ -107,8 +107,8 @@ AST_T *parser_parse_statements(parser_T *parser, scope_T *scope)
     AST_T *compound = init_ast(AST_COMPOUND, parser->current_token->line, parser->current_token->col);
     scope_T *new_scope = init_scope();
     compound->compound_val = calloc(1, sizeof(struct AST_STRUCT *));
-
-    AST_T *ast_statement = parser_parse_expr(parser, new_scope, compound);
+    AST_T *ast_statement;
+    ast_statement = parser_parse_expr(parser, new_scope, compound);
     if (ast_statement->type == AST_NOOP)
     {
         return init_ast(AST_NOOP, parser->current_token->line, parser->current_token->col);
@@ -121,7 +121,7 @@ AST_T *parser_parse_statements(parser_T *parser, scope_T *scope)
     while ((parser->prev_token->type == TOKEN_SEMI) && (parser->current_token->type != TOKEN_EOF))
     {
 
-        AST_T *ast_statement = parser_parse_expr(parser, new_scope, compound);
+        ast_statement = parser_parse_expr(parser, new_scope, compound);
         compound->compound_size += 1;
         ast_statement->parent = compound;
 
@@ -497,6 +497,25 @@ AST_T *parser_parse_if_stmnt(parser_T *parser, scope_T *scope)
     return ast_if;
 }
 
+AST_T *parser_parse_while_loop(parser_T *parser, scope_T *scope)
+{
+    AST_T *ast_while = init_ast(AST_WHILE_LOOP, parser->current_token->line, parser->current_token->col);
+    parser_eat(parser, TOKEN_ID); // eat the 'while'
+    parser_eat(parser, TOKEN_LPAR);
+
+    ast_while->while_predicate = parser_parse_expr(parser, scope, ast_while);
+
+    parser_eat(parser, TOKEN_RPAR);
+
+    parser_eat(parser, TOKEN_LBRA);
+
+    ast_while->while_body = parser_parse_statements(parser, scope);
+    ast_while->while_body->parent = ast_while;
+    ast_while->scope = scope;
+    parser_eat(parser, TOKEN_RBRA);
+    return ast_while;
+}
+
 AST_T *parser_parse_return_stmnt(parser_T *parser, scope_T *scope)
 {
     AST_T *ast_ret = init_ast(AST_RET_STMNT, parser->current_token->line, parser->current_token->col);
@@ -506,6 +525,15 @@ AST_T *parser_parse_return_stmnt(parser_T *parser, scope_T *scope)
     ast_ret->scope = scope;
     ast_ret->global_scope = parser->scope;
     return ast_ret;
+}
+
+AST_T *parser_parse_break_stmnt(parser_T *parser, scope_T *scope)
+{
+    AST_T *ast_break = init_ast(AST_BREAK_STMNT, parser->current_token->line, parser->current_token->col);
+    parser_eat(parser, TOKEN_ID); // eat the 'break'
+    ast_break->scope = scope;
+    ast_break->global_scope = parser->scope;
+    return ast_break;
 }
 
 AST_T *parser_parse_var(parser_T *parser, scope_T *scope)
@@ -628,9 +656,17 @@ AST_T *parser_parse_id(parser_T *parser, scope_T *scope)
     {
         return parser_parse_if_stmnt(parser, scope);
     }
+    else if (strncmp(parser->current_token->value, "while", 6) == 0)
+    {
+        return parser_parse_while_loop(parser, scope);
+    }
     else if (strncmp(parser->current_token->value, "ret", 4) == 0)
     {
         return parser_parse_return_stmnt(parser, scope);
+    }
+    else if (strncmp(parser->current_token->value, "break", 6) == 0)
+    {
+        return parser_parse_break_stmnt(parser, scope);
     }
     else if (strncmp(parser->current_token->value, "True", 5) == 0)
     {

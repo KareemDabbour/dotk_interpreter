@@ -88,7 +88,6 @@ char lexer_peek(lexer_T *lexer)
 
 token_T *lexer_get_next_token(lexer_T *lexer)
 {
-    char *str;
     while (lexer->c != '\0' && lexer->index < lexer->len)
     {
         if (lexer->c == '~')

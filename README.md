@@ -56,6 +56,43 @@ var x = 41;
 
 More variable declaration examples can be seen in `examples/variables.k`
 
+## While loops
+Using the key word `while`, while loops can be declared.
+The following code contains how while loop should be structured:
+```js
+while(<PREDICATE>){
+    <CODE_TO_BE_EXECUTED>;
+};
+```  
+### Break statements
+With the key word `break`, one can preemptively exit a while loop. The following code is an example of that:
+```py
+while(True){
+    print("This is inside the while loop");
+    if(1 == 1){
+        break;
+    };
+    print("Should not print");
+};
+# Output: "This is inside the while loop"
+```
+### Return statements
+In `Dot-K` one can use the `ret` in conjunction with `while loops` to assign variables. The following code is an example:
+```js
+var x = 3;
+var k = while(x > 0){
+            if(x == 1){
+                ret x;
+            };
+            x = x - 1;
+        };
+```
+```py
+print("Val of k is " + k);
+# Output: "Val of k is 1"  
+```
+
+More while-loop examples can be seen in `examples/while-loops.k`
 ## Arrays
 
 Arrays containing Floats, Ints, Strings and/or Arrays can be explicitly declared or declared with a set size and default value. 
@@ -190,9 +227,12 @@ if("a" > "z" && 1 != 1){
 
 ## Future Features
 
-### While and for loops
+### Improving Memory Management by Cleaning up Architecture
+Currently, there is little to no memory management found in the code; this leads to a lot of memory leaks and sub-optimal code. By refactoring the architecture and cleaning up technical debt performance of `Dot-K` will hopefully improve.
 
-This language has no support for `while` and `for` loops natively. However, they can be simulated using recursive functions. Be that as it may, loops are in the works!
+### Creating a shell
+A `Dot-K` shell would allow for on-the-fly execution of `Dot-K` code - much like `python`.
+
 
 ## Implementation
 

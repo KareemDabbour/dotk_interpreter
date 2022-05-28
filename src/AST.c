@@ -7,6 +7,7 @@
 static AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size);
 static AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size);
 static AST_T *__visit_ret_stmnt__(AST_T *node, AST_T *to_visit);
+static AST_T *__visit_break_stmnt__(AST_T *node, AST_T *to_visit);
 static AST_T *ast_visit_func_call(AST_T *node);
 static AST_T *ast_visit_func_def(AST_T *node);
 static AST_T *ast_visit_var_def(AST_T *node);
@@ -28,7 +29,9 @@ static AST_T *ast_visit_mod(AST_T *node);
 static AST_T *ast_visit_div(AST_T *node);
 static AST_T *ast_visit_int_div(AST_T *node);
 static AST_T *ast_visit_if_statement(AST_T *node);
+static AST_T *ast_visit_while_loop(AST_T *node);
 static AST_T *ast_visit_ret_statement(AST_T *node);
+static AST_T *ast_visit_break_statement(AST_T *node);
 static AST_T *ast_visit_and(AST_T *node);
 static AST_T *ast_visit_or(AST_T *node);
 static AST_T *ast_visit_not_eq_comp(AST_T *node);
@@ -38,7 +41,7 @@ static AST_T *ast_visit_gt_comp(AST_T *node);
 static AST_T *ast_visit_lte_comp(AST_T *node);
 static AST_T *ast_visit_gte_comp(AST_T *node);
 
-const char *enum_names[31] = {
+const char *enum_names[33] = {
     "NULL",
     "FUNCTION CALL",
     "FUNCTION DEFINITION",
@@ -69,7 +72,9 @@ const char *enum_names[31] = {
     "VARIABLE REDEFINITION",
     "ARRAY INDEXING ASSIGNMENT",
     "ARRAY INDEXING",
-    "MODULUS"};
+    "MODULUS",
+    "WHILE LOOP",
+    "BREAK STATEMENT"};
 
 void print_arr(AST_T *arr)
 {
@@ -86,7 +91,7 @@ void print_arr(AST_T *arr)
                 printf("\"%s\", ", temp->str_val);
                 break;
             case AST_INT:
-                printf("%d, ", temp->int_val);
+                printf("%ld, ", temp->int_val);
                 break;
             case AST_FLOAT:
                 printf("%.2f, ", temp->float_val);
@@ -125,7 +130,7 @@ void print_arr(AST_T *arr)
             printf("\"%s\"", temp->str_val);
             break;
         case AST_INT:
-            printf("%d", temp->int_val);
+            printf("%ld", temp->int_val);
             break;
         case AST_FLOAT:
             printf("%.2f", temp->float_val);
@@ -180,7 +185,7 @@ char *get_arr_as_string(AST_T *node)
                 break;
             }
             case AST_INT:
-                sprintf(str_temp, "%d, ", temp->int_val);
+                sprintf(str_temp, "%ld, ", temp->int_val);
                 len = strlen(str_temp);
                 str = realloc(str, (len + str_size) * sizeof(char));
                 str_size += len;
@@ -251,7 +256,7 @@ char *get_arr_as_string(AST_T *node)
             strcat(str, str_temp);
             break;
         case AST_INT:
-            sprintf(str_temp, "%d", temp->int_val);
+            sprintf(str_temp, "%ld", temp->int_val);
             len = strlen(str_temp);
             str = realloc(str, (len + str_size) * sizeof(char));
             str_size += len;
@@ -693,7 +698,7 @@ AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size)
     if (args_size == 0)
     {
         printf(KYEL);
-        printf("%d:%d -- WAENING: Calling 'print()' with no args\n", node->line, node->col);
+        printf("%d:%d -- WARNING: Calling 'print()' with no args\n", node->line, node->col);
         printf(KNRM);
     }
     for (size_t i = 0; i < args_size; i++)
@@ -706,7 +711,7 @@ AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size)
             printf("\"%s\"\n", visited_ast->str_val);
             break;
         case AST_INT:
-            printf("%d\n", visited_ast->int_val);
+            printf("%ld\n", visited_ast->int_val);
             break;
         case AST_FLOAT:
             printf("%.2f\n", visited_ast->float_val);
@@ -781,6 +786,8 @@ AST_T *ast_visit(AST_T *node)
         return ast_visit_int_div(node);
     case AST_IF_STMNT:
         return ast_visit_if_statement(node);
+    case AST_WHILE_LOOP:
+        return ast_visit_while_loop(node);
     case AST_BOOL:
         return ast_visit_bool(node);
     case AST_EQ_COMP:
@@ -797,6 +804,8 @@ AST_T *ast_visit(AST_T *node)
         return ast_visit_gte_comp(node);
     case AST_RET_STMNT:
         return ast_visit_ret_statement(node);
+    case AST_BREAK_STMNT:
+        return ast_visit_break_statement(node);
     case AST_ARR:
         return ast_visit_arr(node);
     case AST_ARR_DEF:
@@ -1040,7 +1049,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
     if (index < 0 || index >= arr->arr_size)
     {
         printf(KRED);
-        printf("%d:%d -- Index Out of Bounds Error. Var '%s' has size %ld but %d was passed in\n",
+        printf("%d:%d -- Index Out of Bounds Error. Var '%s' has size %ld but %ld was passed in\n",
                node->line,
                node->col,
                node->var_def_var_name,
@@ -1364,7 +1373,7 @@ AST_T *ast_visit_add(AST_T *node)
         {
             AST_T *ret = init_ast(AST_STR, left->line, left->col);
             char str[MAX_NUM_SPACE + MAX_STR_CHAR];
-            sprintf(str, "%d%s", left->int_val, right->str_val);
+            sprintf(str, "%ld%s", left->int_val, right->str_val);
             int len = strlen(str) + 1;
             ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
@@ -1398,7 +1407,7 @@ AST_T *ast_visit_add(AST_T *node)
         }
         case AST_INT:
         {
-            sprintf(str, "%s%d", left->str_val, right->int_val);
+            sprintf(str, "%s%ld", left->str_val, right->int_val);
             int len = strlen(str);
             ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
@@ -2266,38 +2275,105 @@ AST_T *ast_visit_if_statement(AST_T *node)
     return init_ast(AST_NOOP, node->line, node->col);
 }
 
+AST_T *ast_visit_while_loop(AST_T *node)
+{
+    AST_T *pred = ast_visit(node->while_predicate);
+    if (pred->is_true > 0)
+    {
+        AST_T *ret = ast_visit(node->while_body);
+        if (ret->type == AST_BREAK_STMNT)
+            return init_ast(AST_NOOP, node->line, node->col);
+        else if (ret->type == AST_RET_STMNT)
+            return ret;
+        else
+            return ast_visit(node);
+    }
+    return init_ast(AST_NOOP, node->line, node->col);
+}
+
 AST_T *ast_visit_ret_statement(AST_T *node)
 {
     return ast_visit(node->return_expr);
 }
 
+AST_T *ast_visit_break_statement(AST_T *node)
+{
+    return node;
+}
+
 AST_T *ast_visit_compound(AST_T *node)
 {
+    AST_T *ret;
     for (int i = 0; i < node->compound_size; i++)
     {
         if (node->compound_val[i]->type == AST_RET_STMNT)
-            return __visit_ret_stmnt__(node, node->compound_val[i]);
+        {
+            ret = __visit_ret_stmnt__(node, node->compound_val[i]);
+            if (ret)
+                return ret;
+
+            continue;
+        }
+        if (node->compound_val[i]->type == AST_BREAK_STMNT)
+        {
+            if (__visit_break_stmnt__(node, node->compound_val[i]))
+                return node->compound_val[i];
+            continue;
+        }
 
         AST_T *visit = ast_visit(node->compound_val[i]);
         if (visit->type == AST_RET_STMNT)
-            return __visit_ret_stmnt__(node, visit);
+        {
+            ret = __visit_ret_stmnt__(node, visit);
+            if (ret)
+                return ret;
+            continue;
+        }
+        if (visit->type == AST_BREAK_STMNT)
+        {
+            if (__visit_break_stmnt__(node, visit))
+                return visit;
+        }
     }
     return init_ast(AST_NOOP, node->line, node->col);
 }
 
+AST_T *__visit_break_stmnt__(AST_T *node, AST_T *to_visit)
+{
+    if (node->parent != NULL)
+        return ast_visit(to_visit);
+    else
+    {
+        printf(KYEL);
+        printf("%d:%d -- WARNING: 'break' outside of while loop.\n", to_visit->line, to_visit->col);
+        printf(KNRM);
+        return NULL;
+    }
+}
+
 AST_T *__visit_ret_stmnt__(AST_T *node, AST_T *to_visit)
 {
-    if (node->parent != NULL && node->parent->type != AST_FUNC_DEF)
+    if (node->parent != NULL)
     {
-        AST_T *ret = init_ast(AST_RET_STMNT, to_visit->line, to_visit->col);
-        ret->return_expr = ast_visit(to_visit);
-        ret->scope = node->scope;
-        ret->global_scope = node->global_scope;
-        ret->parent = node;
-        return ret;
+        if (node->parent->type != AST_FUNC_DEF)
+        {
+            AST_T *ret = init_ast(AST_RET_STMNT, to_visit->line, to_visit->col);
+            ret->return_expr = ast_visit(to_visit);
+            ret->scope = node->scope;
+            ret->global_scope = node->global_scope;
+            ret->parent = node;
+            return ret;
+        }
+        else
+            return ast_visit(to_visit);
     }
     else
-        return ast_visit(to_visit);
+    {
+        printf(KYEL);
+        printf("%d:%d -- WARNING: 'ret' outside function.\n", to_visit->line, to_visit->col);
+        printf(KNRM);
+        return NULL;
+    }
 }
 
 AST_T *init_ast(int type, unsigned int line, unsigned int col)
@@ -2334,6 +2410,10 @@ AST_T *init_ast(int type, unsigned int line, unsigned int col)
     ast->else_body = (void *)0;
     ast->if_predicate = (void *)0;
 
+    // AST WHILE
+    ast->while_predicate = (void *)0;
+    ast->while_body = (void *)0;
+
     // AST BOOL
     ast->is_true = 0;
 
@@ -2341,7 +2421,7 @@ AST_T *init_ast(int type, unsigned int line, unsigned int col)
     ast->str_val = (void *)0;
 
     // AST INT
-    ast->int_val = 0;
+    ast->int_val = 0l;
 
     // AST ARR & ARR DEF
     ast->arr = (void *)0;

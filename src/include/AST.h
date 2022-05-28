@@ -49,7 +49,9 @@ typedef struct AST_STRUCT
         AST_VAR_REDEF,            // 27
         AST_ARR_INDEX_ASSIGNMENT, // 28
         AST_ARR_INDEX,            // 29
-        AST_MOD                   // 30
+        AST_MOD,                  // 30
+        AST_WHILE_LOOP,           // 31
+        AST_BREAK_STMNT           // 32
     } type;
 
     struct SCOPE_STRUCT *scope;
@@ -80,7 +82,7 @@ typedef struct AST_STRUCT
     char *str_val;
 
     // AST INT
-    int int_val;
+    long int int_val;
 
     // AST INT
     float float_val;
@@ -98,6 +100,10 @@ typedef struct AST_STRUCT
     struct AST_STRUCT *if_body;
     struct AST_STRUCT *else_body;
     struct AST_STRUCT *if_predicate;
+
+    // AST WHILE
+    struct AST_STRUCT *while_predicate;
+    struct AST_STRUCT *while_body;
 
     // AST RET STATEMENT
     struct AST_STRUCT *return_expr;
