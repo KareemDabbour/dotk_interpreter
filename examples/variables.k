@@ -17,6 +17,8 @@ print(
 
 print("-------------");
 
+print("f = " + f);
+print("Running: f = f || True");
 f = f || True;
-
+print("f = " + f);
 print("f || True: " + f);

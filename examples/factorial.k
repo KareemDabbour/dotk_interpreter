@@ -3,8 +3,8 @@ def fact(x){
         ret 1;
     }else{
         ret x * fact(x-1);
-    };
-};
+    }
+}
 
 var k = 5;
 print(k + "! == " + fact(k));
