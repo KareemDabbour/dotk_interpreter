@@ -104,6 +104,7 @@ AST_T *parser_parse(parser_T *parser, scope_T *scope)
 
 AST_T *parser_parse_statements(parser_T *parser, scope_T *scope)
 {
+    int no_semi_continue = 0;
     AST_T *compound = init_ast(AST_COMPOUND, parser->current_token->line, parser->current_token->col);
     scope_T *new_scope = init_scope();
     compound->compound_val = calloc(1, sizeof(struct AST_STRUCT *));
@@ -113,14 +114,20 @@ AST_T *parser_parse_statements(parser_T *parser, scope_T *scope)
     {
         return init_ast(AST_NOOP, parser->current_token->line, parser->current_token->col);
     }
-    parser_eat(parser, TOKEN_SEMI);
+    if ((ast_statement->type != AST_FUNC_DEF &&
+         ast_statement->type != AST_IF_STMNT &&
+         ast_statement->type != AST_WHILE_LOOP) ||
+        parser->current_token->type == TOKEN_SEMI)
+        parser_eat(parser, TOKEN_SEMI);
+    else
+        no_semi_continue = 1;
     ast_statement->scope = new_scope;
     compound->compound_val[0] = ast_statement;
     compound->compound_size += 1;
 
-    while ((parser->prev_token->type == TOKEN_SEMI) && (parser->current_token->type != TOKEN_EOF))
+    while (((parser->prev_token->type == TOKEN_SEMI) && (parser->current_token->type != TOKEN_EOF)) || no_semi_continue)
     {
-
+        no_semi_continue = 0;
         ast_statement = parser_parse_expr(parser, new_scope, compound);
         compound->compound_size += 1;
         ast_statement->parent = compound;
@@ -132,7 +139,13 @@ AST_T *parser_parse_statements(parser_T *parser, scope_T *scope)
         compound->compound_val[compound->compound_size - 1] = ast_statement;
         if (ast_statement->type == AST_NOOP)
             break;
-        parser_eat(parser, TOKEN_SEMI);
+        if ((ast_statement->type != AST_FUNC_DEF &&
+             ast_statement->type != AST_IF_STMNT &&
+             ast_statement->type != AST_WHILE_LOOP) ||
+            parser->current_token->type == TOKEN_SEMI)
+            parser_eat(parser, TOKEN_SEMI);
+        else
+            no_semi_continue = 1;
     }
 
     compound->global_scope = parser->scope;
