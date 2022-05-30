@@ -62,7 +62,7 @@ The following code contains how while loop should be structured:
 ```js
 while(<PREDICATE>){
     <CODE_TO_BE_EXECUTED>;
-};
+}
 ```  
 ### Break statements
 With the key word `break`, one can preemptively exit a while loop. The following code is an example of that:
@@ -71,9 +71,9 @@ while(True){
     print("This is inside the while loop");
     if(1 == 1){
         break;
-    };
+    }
     print("Should not print");
-};
+}
 # Output: "This is inside the while loop"
 ```
 ### Return statements
@@ -83,9 +83,9 @@ var x = 3;
 var k = while(x > 0){
             if(x == 1){
                 ret x;
-            };
+            }
             x = x - 1;
-        };
+        }
 ```
 ```py
 print("Val of k is " + k);
@@ -134,7 +134,7 @@ The following code is an example of how to define and call a function `foo`:
 ```python
 def foo(){
     print("This is function 'foo'");
-};
+}
 
 foo();
 # Output: This is function 'foo'
@@ -147,7 +147,7 @@ The following code is an example of how to define and call a function `foo`:
 ```python
 def foo(x){
     print("This is function 'foo' " + x);
-};
+}
 
 foo("with arguments!");
 # Output: This is function 'foo' with arguments!
@@ -160,15 +160,15 @@ The following code is an example of how to define and call functions `foo` and `
 ```python
 def foo(x){
     ret x + 1;
-};
+}
 
 def bar(x){
     if(x == 0){
         ret 1;
     }else{
         ret 2.13 * x;
-    };
-};
+    }
+}
 
 print(foo(2)); # Output: 3
 print(bar(0)); # Output: 1
@@ -185,8 +185,8 @@ def fact(x){
         ret 1;
     }else{
         ret x * fact(x-1);
-    };
-};
+    }
+}
 print("5! == " + fact(5));
 # Output: 5! == 120
 ```
@@ -207,14 +207,14 @@ if("a" < "z"){
     print("'a' is less than 'z'");
 }else{
     print("Something is wrong!");
-};
+}
 
 # Output: 'a' > 'z' OR 1 == 1
 if("a" > "z" || 1 == 1){
     print("'a' > 'z' OR 1 == 1");
 }else{
     print("Something is wrong!");
-};
+}
 
 
 # Output: 'a'<'z' OR 1 == 1
@@ -222,7 +222,7 @@ if("a" > "z" && 1 != 1){
     print("'a' > 'z' AND 1 != 1");
 }else{
     print("'a'<'z' OR 1 == 1");
-};
+}
 ```
 
 ## Future Features
@@ -255,7 +255,7 @@ would be lexed to the following list of tokens
   Token("=", EQ_TOKEN),
   Token("12", INT_TOKEN),
   Token(";", SEMI_TOKEN),
-];
+]
 ```
 
 ### Parsing
