@@ -316,7 +316,7 @@ AST_T *parser_parse_factor(parser_T *parser, scope_T *scope, AST_T *parent)
     case TOKEN_FLOAT:
     {
         AST_T *ast_float = init_ast(AST_FLOAT, parser->current_token->line, parser->current_token->col);
-        ast_float->float_val = atof(parser->current_token->value);
+        ast_float->float_val = strtof(parser->current_token->value, NULL);
         ast_float->parent = parent;
         parser_eat(parser, TOKEN_FLOAT);
         return ast_float;

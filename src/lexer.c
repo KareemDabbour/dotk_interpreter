@@ -21,11 +21,6 @@ void lexer_advance(lexer_T *lexer)
 {
     if (lexer->c != '\0' && lexer->index < lexer->len)
     {
-        if (lexer->c == 10)
-        {
-            lexer->line += 1;
-            lexer->col = 0;
-        }
         lexer->index += 1;
         lexer->col += 1;
         lexer->c = lexer->contents[lexer->index];
@@ -36,6 +31,11 @@ void lexer_skip_whitespace(lexer_T *lexer)
 {
     while (lexer->c == ' ' || lexer->c == 10) // skips spaces and new lines (the 10)
     {
+        if (lexer->c == 10)
+        {
+            lexer->line += 1;
+            lexer->col = 0;
+        }
         lexer_advance(lexer);
     }
 }

@@ -282,7 +282,7 @@ cp -r ./dotk-syntax-highlighting ~/.vscode/extensions/dotk-syntax-highlighting
 For Windows systems you can run the following from the root directory:
 
 ```dos
-cp .\dotk-syntax-highlighting %USERPROFILE%\. vscode\extensions
+cp .\dotk-syntax-highlighting %USERPROFILE%\.vscode\extensions
 ```
 
 ## Installing & Running
