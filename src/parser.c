@@ -655,6 +655,22 @@ AST_T *parser_parse_bool(parser_T *parser, scope_T *scope, int val)
     return ast_bool;
 }
 
+AST_T *parser_parse_type_cast(parser_T *parser, scope_T *scope, int type_cast)
+{
+    AST_T *ast_type_cast = init_ast(AST_TYPE_CAST, parser->current_token->line, parser->current_token->col);
+
+    ast_type_cast->scope = scope;
+    ast_type_cast->global_scope = parser->scope;
+
+    ast_type_cast->cast_type = type_cast;
+    parser_eat(parser, TOKEN_ID); // Eat the int, float or str
+    parser_eat(parser, TOKEN_LPAR);
+    ast_type_cast->var_def_expr = parser_parse_expr(parser, scope, ast_type_cast);
+    parser_eat(parser, TOKEN_RPAR);
+
+    return ast_type_cast;
+}
+
 AST_T *parser_parse_id(parser_T *parser, scope_T *scope)
 {
     if (strncmp(parser->current_token->value, "var", 4) == 0)
@@ -676,6 +692,26 @@ AST_T *parser_parse_id(parser_T *parser, scope_T *scope)
     else if (strncmp(parser->current_token->value, "ret", 4) == 0)
     {
         return parser_parse_return_stmnt(parser, scope);
+    }
+    else if (strncmp(parser->current_token->value, "int", 4) == 0)
+    {
+        return parser_parse_type_cast(parser, scope, TO_INT);
+    }
+    else if (strncmp(parser->current_token->value, "str", 4) == 0)
+    {
+        return parser_parse_type_cast(parser, scope, TO_STR);
+    }
+    else if (strncmp(parser->current_token->value, "float", 6) == 0)
+    {
+        return parser_parse_type_cast(parser, scope, TO_FLOAT);
+    }
+    else if (strncmp(parser->current_token->value, "bool", 5) == 0)
+    {
+        return parser_parse_type_cast(parser, scope, TO_BOOL);
+    }
+    else if (strncmp(parser->current_token->value, "arr", 4) == 0)
+    {
+        return parser_parse_type_cast(parser, scope, TO_ARR);
     }
     else if (strncmp(parser->current_token->value, "break", 6) == 0)
     {

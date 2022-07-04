@@ -1,5 +1,6 @@
 #ifndef AST_H
 #include <stdlib.h>
+#include <errno.h>
 #define AST_H
 #define MAX_STR_CHAR 2000
 #define MAX_NUM_SPACE 20
@@ -51,15 +52,27 @@ typedef struct AST_STRUCT
         AST_ARR_INDEX,            // 29
         AST_MOD,                  // 30
         AST_WHILE_LOOP,           // 31
-        AST_BREAK_STMNT           // 32
+        AST_BREAK_STMNT,          // 32
+        AST_TYPE_CAST             // 33
     } type;
+
+    // AST TYPE CAST
+    enum
+    {
+        NONE,
+        TO_FLOAT,
+        TO_INT,
+        TO_STR,
+        TO_BOOL,
+        TO_ARR
+    } cast_type;
 
     struct SCOPE_STRUCT *scope;
     struct SCOPE_STRUCT *global_scope;
 
     struct AST_STRUCT *parent;
 
-    // AST VAR DEF & VAR REDEF
+    // AST VAR DEF & VAR REDEF & AST TYPE CAST
     char *var_def_var_name;
     struct AST_STRUCT *var_def_val;
     struct AST_STRUCT *var_def_expr;

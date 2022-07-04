@@ -260,10 +260,13 @@ token_T *lexer_collect_string(lexer_T *lexer)
 
     while (lexer->c != '"')
     {
-        if (lexer->c == '\\' && lexer_peek(lexer) == 'n')
+        if (lexer->c == '\\')
         {
-            lexer_advance(lexer);
-            lexer->c = '\n';
+            if (lexer_peek(lexer) == '"')
+            {
+                lexer_advance(lexer);
+                lexer->c = '"';
+            }
         }
         char *s = lexer_get_current_as_string(lexer);
         val = realloc(val, strlen(val) + strlen(s) + 1 * sizeof(char));

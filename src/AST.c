@@ -40,41 +40,51 @@ static AST_T *ast_visit_lt_comp(AST_T *node);
 static AST_T *ast_visit_gt_comp(AST_T *node);
 static AST_T *ast_visit_lte_comp(AST_T *node);
 static AST_T *ast_visit_gte_comp(AST_T *node);
+static AST_T *ast_visit_type_cast(AST_T *node);
 
-const char *enum_names[33] = {
-    "NULL",
-    "FUNCTION CALL",
-    "FUNCTION DEFINITION",
-    "VARIABLE DEFINITION",
-    "VAR",
-    "STR",
-    "COMPOUND",
-    "INT",
-    "MULTIPLICATION",
-    "ADDITION",
-    "SUBTRACTION",
-    "DIVISION",
-    "INT DIVISION",
+const char *cast_type_enum_names[6] = {
+    "NONE",
     "FLOAT",
-    "IF STATEMENT",
-    "EQUALS COMPARATOR",
-    "LESS THAN COMPARATOR",
-    "GREATER THAN COMPARATOR",
-    "LESS THAN OR EQUAL COMPARATOR",
-    "GREATER THAN OR EQUAL COMPARATOR",
-    "AND COMPARATOR",
-    "OR COMPARATOR",
+    "INT",
+    "STR",
     "BOOLEAN",
-    "RETURN STATEMENT",
-    "NOT EQUALS COMPARATOR",
-    "ARRAY",
-    "ARRAY DECLARATION",
-    "VARIABLE REDEFINITION",
-    "ARRAY INDEXING ASSIGNMENT",
-    "ARRAY INDEXING",
-    "MODULUS",
-    "WHILE LOOP",
-    "BREAK STATEMENT"};
+    "LIST"};
+
+const char *
+    ast_enum_names[34] = {"NULL",
+                          "FUNCTION CALL",
+                          "FUNCTION DEFINITION",
+                          "VARIABLE DEFINITION",
+                          "VAR",
+                          "STR",
+                          "COMPOUND",
+                          "INT",
+                          "MULTIPLICATION",
+                          "ADDITION",
+                          "SUBTRACTION",
+                          "DIVISION",
+                          "INT DIVISION",
+                          "FLOAT",
+                          "IF STATEMENT",
+                          "EQUALS COMPARATOR",
+                          "LESS THAN COMPARATOR",
+                          "GREATER THAN COMPARATOR",
+                          "LESS THAN OR EQUAL COMPARATOR",
+                          "GREATER THAN OR EQUAL COMPARATOR",
+                          "AND COMPARATOR",
+                          "OR COMPARATOR",
+                          "BOOLEAN",
+                          "RETURN STATEMENT",
+                          "NOT EQUALS COMPARATOR",
+                          "ARRAY",
+                          "ARRAY DECLARATION",
+                          "VARIABLE REDEFINITION",
+                          "ARRAY INDEXING ASSIGNMENT",
+                          "ARRAY INDEXING",
+                          "MODULUS",
+                          "WHILE LOOP",
+                          "BREAK STATEMENT",
+                          "TYPE CAST"};
 
 void print_arr(AST_T *arr)
 {
@@ -117,7 +127,7 @@ void print_arr(AST_T *arr)
                 break;
             }
             default:
-                printf("%s, ", enum_names[temp->type]);
+                printf("%s, ", ast_enum_names[temp->type]);
                 break;
             }
         }
@@ -153,7 +163,7 @@ void print_arr(AST_T *arr)
             break;
         }
         default:
-            printf("%s", enum_names[temp->type]);
+            printf("%s", ast_enum_names[temp->type]);
             break;
         }
     }
@@ -233,7 +243,7 @@ char *get_arr_as_string(AST_T *node)
                 break;
             }
             default:
-                sprintf(str_temp, "%s, ", enum_names[temp->type]);
+                sprintf(str_temp, "%s, ", ast_enum_names[temp->type]);
                 len = strlen(str_temp);
                 str = realloc(str, (len + str_size) * sizeof(char));
                 str_size += len;
@@ -304,7 +314,7 @@ char *get_arr_as_string(AST_T *node)
             break;
         }
         default:
-            sprintf(str_temp, "%s", enum_names[temp->type]);
+            sprintf(str_temp, "%s", ast_enum_names[temp->type]);
             len = strlen(str_temp);
             str = realloc(str, (len + str_size) * sizeof(char));
             str_size += len;
@@ -595,7 +605,7 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                                     printf("%d:%d -- Cannot compare objects of type '%s'\n",
                                            x->line,
                                            x->col,
-                                           enum_names[x->type]);
+                                           ast_enum_names[x->type]);
                                     exit(1);
                                 }
                             }
@@ -615,8 +625,8 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                                 printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                                        x_arr_elem->line,
                                        x_arr_elem->col,
-                                       enum_names[x_arr_elem->type],
-                                       enum_names[y_arr_elem->type]);
+                                       ast_enum_names[x_arr_elem->type],
+                                       ast_enum_names[y_arr_elem->type]);
                                 exit(1);
                             }
                             if (ret == 0)
@@ -630,7 +640,7 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                     printf("%d:%d -- Cannot compare objects of type '%s'\n",
                            x_elem->line,
                            x_elem->col,
-                           enum_names[x_elem->type]);
+                           ast_enum_names[x_elem->type]);
                     exit(1);
                 }
             }
@@ -650,8 +660,8 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                 printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                        x_elem->line,
                        x_elem->col,
-                       enum_names[x_elem->type],
-                       enum_names[y_elem->type]);
+                       ast_enum_names[x_elem->type],
+                       ast_enum_names[y_elem->type]);
                 exit(1);
             }
             if (ret == 0)
@@ -687,7 +697,7 @@ AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size)
 
     default:
         printf(KRED);
-        printf("%d:%d -- Cannot get length of type '%s'.", node->line, node->col, enum_names[visited_ast->type]);
+        printf("%d:%d -- Cannot get length of type '%s'.", node->line, node->col, ast_enum_names[visited_ast->type]);
         exit(1);
     }
     return ret;
@@ -732,11 +742,30 @@ AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size)
             break;
         }
         default:
-            printf("%s\n", enum_names[visited_ast->type]);
+            printf("%s\n", ast_enum_names[visited_ast->type]);
             break;
         }
     }
     return init_ast(AST_NOOP, node->line, node->col);
+}
+
+AST_T *builtin_function_not(AST_T *node, AST_T **args, size_t args_size)
+{
+    if (args_size == 0 || args_size > 1)
+    {
+        printf(KRED);
+        printf("%d:%d -- 'not()' takes exactly one argument (%ld given)\n",
+               node->line,
+               node->col,
+               args_size);
+        exit(1);
+    }
+    AST_T *ret = init_ast(AST_BOOL, node->line, node->col);
+    ret->scope = node->scope;
+    ret->global_scope = node->global_scope;
+    AST_T *visited_ast = ast_visit(args[0]);
+    ret->is_true = visited_ast->is_true ? 0 : 1;
+    return ret;
 }
 
 AST_T *ast_visit(AST_T *node)
@@ -744,7 +773,7 @@ AST_T *ast_visit(AST_T *node)
 // For debugging
 #if DEBUG
     printf(KCYN);
-    printf("Visiting: %s\n", enum_names[node->type]);
+    printf("Visiting: %s\n", ast_enum_names[node->type]);
     printf(KNRM);
 #endif
 
@@ -814,11 +843,13 @@ AST_T *ast_visit(AST_T *node)
         return ast_visit_arr_index_assignment(node);
     case AST_ARR_INDEX:
         return ast_visit_arr_index(node);
+    case AST_TYPE_CAST:
+        return ast_visit_type_cast(node);
     case AST_NOOP:
         return node;
     default:
         printf(KRED);
-        printf("%d:%d -- Uncaught statement of type: '%s'\n", node->line, node->col, enum_names[node->type]);
+        printf("%d:%d -- Uncaught statement of type: '%s'\n", node->line, node->col, ast_enum_names[node->type]);
         exit(1);
     }
 }
@@ -829,6 +860,8 @@ AST_T *ast_visit_func_call(AST_T *node)
         return builtin_function_print(node, node->func_call_args, node->func_call_args_size);
     if (strncmp(node->func_call_name, "len", 4) == 0)
         return builtin_function_len(node, node->func_call_args, node->func_call_args_size);
+    if (strncmp(node->func_call_name, "not", 4) == 0)
+        return builtin_function_not(node, node->func_call_args, node->func_call_args_size);
 
     AST_T *func_def = scope_get_func_def(
         node->global_scope,
@@ -948,7 +981,7 @@ AST_T *ast_visit_arr_def(AST_T *node)
         printf("%d:%d -- Can't create an array with size of type '%s' must be 'INT' \n",
                node->line,
                node->col,
-               enum_names[size->type]);
+               ast_enum_names[size->type]);
         exit(1);
     }
     if (size->int_val < 0)
@@ -1026,7 +1059,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
         printf("%d:%d -- '%s' type var '%s' is not subscriptable\n",
                node->line,
                node->col,
-               enum_names[arr->type],
+               ast_enum_names[arr->type],
                node->var_def_var_name);
         exit(1);
     }
@@ -1038,7 +1071,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
         printf("%d:%d -- Can't index an array with type '%s' must be 'INT' \n",
                node->line,
                node->col,
-               enum_names[ast_index->type]);
+               ast_enum_names[ast_index->type]);
         exit(1);
     }
     size_t index;
@@ -1071,7 +1104,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
                 printf("%d:%d -- '%s' type is not subscriptable\n",
                        node->line,
                        node->col,
-                       enum_names[ret->type]);
+                       ast_enum_names[ret->type]);
                 exit(1);
             }
             node->arr_inner_index->arr = ret->arr;
@@ -1127,7 +1160,7 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
         printf("%d:%d -- '%s' type var '%s' does not support item assignment \n",
                node->line,
                node->col,
-               enum_names[arr->type],
+               ast_enum_names[arr->type],
                node->var_def_var_name);
         exit(1);
     }
@@ -1138,7 +1171,7 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
         printf("%d:%d -- Can't index an array with type '%s' must be 'INT' \n",
                node->line,
                node->col,
-               enum_names[ast_index->type]);
+               ast_enum_names[ast_index->type]);
         exit(1);
     }
     size_t index;
@@ -1167,7 +1200,7 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
             printf("%d:%d -- '%s' type is not subscriptable\n",
                    node->line,
                    node->col,
-                   enum_names[inner_arr->type]);
+                   ast_enum_names[inner_arr->type]);
             exit(1);
         }
         node->arr_inner_index->arr = inner_arr->arr;
@@ -1205,7 +1238,7 @@ AST_T *ast_visit_var_redef(AST_T *node)
     vardef->var_def_val = ast_visit(node->var_def_expr);
     scope_replace_var_def(vardef->scope, vardef);
 
-    return vardef;
+    return ast_visit(vardef->var_def_val);
 }
 
 AST_T *ast_visit_var(AST_T *node)
@@ -1322,7 +1355,7 @@ AST_T *ast_visit_add(AST_T *node)
             printf("%d:%d -- Cannot add objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
         }
@@ -1461,7 +1494,7 @@ AST_T *ast_visit_add(AST_T *node)
         printf("%d:%d -- Can only concatenate array (not '%s') to array\n",
                left->line,
                left->col,
-               enum_names[right->type]);
+               ast_enum_names[right->type]);
         exit(1);
     }
     else if (left->type == AST_NOOP)
@@ -1494,7 +1527,7 @@ AST_T *ast_visit_add(AST_T *node)
             printf("%d:%d -- bad operand type for unary operator '+': '%s'\n",
                    right->line,
                    right->col,
-                   enum_names[right->type]);
+                   ast_enum_names[right->type]);
             exit(1);
         }
         }
@@ -1513,8 +1546,8 @@ AST_T *ast_visit_add(AST_T *node)
     printf("%d:%d -- Cannot add objects of type '%s' and '%s'\n",
            left->line,
            left->col,
-           enum_names[left->type],
-           enum_names[right->type]);
+           ast_enum_names[left->type],
+           ast_enum_names[right->type]);
     exit(1);
 }
 
@@ -1544,7 +1577,7 @@ AST_T *ast_visit_sub(AST_T *node)
             printf("%d:%d -- Cannot subtract objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
     }
@@ -1583,7 +1616,7 @@ AST_T *ast_visit_sub(AST_T *node)
             printf("%d:%d -- bad operand type for unary operator '-': '%s'\n",
                    right->line,
                    right->col,
-                   enum_names[right->type]);
+                   ast_enum_names[right->type]);
             exit(1);
         }
         }
@@ -1594,7 +1627,7 @@ AST_T *ast_visit_sub(AST_T *node)
         printf("%d:%d -- bad operand type for unary operator '-': '%s'\n",
                right->line,
                right->col,
-               enum_names[right->type]);
+               ast_enum_names[right->type]);
         exit(1);
     }
     else
@@ -1603,8 +1636,8 @@ AST_T *ast_visit_sub(AST_T *node)
         printf("%d:%d -- Cannot subtract objects of type '%s' and '%s'\n",
                left->line,
                left->col,
-               enum_names[left->type],
-               enum_names[right->type]);
+               ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -1629,7 +1662,7 @@ AST_T *ast_visit_mod(AST_T *node)
             printf("%d:%d -- Cannot perfom modulo on objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
         }
@@ -1640,8 +1673,8 @@ AST_T *ast_visit_mod(AST_T *node)
         printf("%d:%d -- Cannot perfom modulo on objects of type '%s' and '%s'\n",
                left->line,
                left->col,
-               enum_names[left->type],
-               enum_names[right->type]);
+               ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -1672,7 +1705,7 @@ AST_T *ast_visit_mul(AST_T *node)
             printf("%d:%d -- Cannot multiply objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
         }
@@ -1695,8 +1728,8 @@ AST_T *ast_visit_mul(AST_T *node)
         printf("%d:%d -- Cannot multiply objects of type '%s' and '%s'\n",
                left->line,
                left->col,
-               enum_names[left->type],
-               enum_names[right->type]);
+               ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -1739,7 +1772,7 @@ AST_T *ast_visit_div(AST_T *node)
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
     }
@@ -1773,8 +1806,8 @@ AST_T *ast_visit_div(AST_T *node)
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col,
-               enum_names[left->type],
-               enum_names[right->type]);
+               ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -1822,7 +1855,7 @@ AST_T *ast_visit_not_eq_comp(AST_T *node)
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
     }
@@ -1844,8 +1877,8 @@ AST_T *ast_visit_not_eq_comp(AST_T *node)
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col,
-               enum_names[left->type],
-               enum_names[right->type]);
+               ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -1893,7 +1926,7 @@ AST_T *ast_visit_eq_comp(AST_T *node)
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
     }
@@ -1915,8 +1948,8 @@ AST_T *ast_visit_eq_comp(AST_T *node)
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col,
-               enum_names[left->type],
-               enum_names[right->type]);
+               ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -1965,7 +1998,7 @@ AST_T *ast_visit_lt_comp(AST_T *node)
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
         }
@@ -1988,8 +2021,8 @@ AST_T *ast_visit_lt_comp(AST_T *node)
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col,
-               enum_names[left->type],
-               enum_names[right->type]);
+               ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -2038,7 +2071,7 @@ AST_T *ast_visit_gt_comp(AST_T *node)
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
         }
@@ -2061,8 +2094,8 @@ AST_T *ast_visit_gt_comp(AST_T *node)
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
                left->col,
-               enum_names[left->type],
-               enum_names[right->type]);
+               ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -2111,7 +2144,7 @@ AST_T *ast_visit_lte_comp(AST_T *node)
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
         }
@@ -2133,8 +2166,8 @@ AST_T *ast_visit_lte_comp(AST_T *node)
         printf(KRED);
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
-               left->col, enum_names[left->type],
-               enum_names[right->type]);
+               left->col, ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -2183,7 +2216,7 @@ AST_T *ast_visit_gte_comp(AST_T *node)
             printf("%d:%d -- Cannot compare objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
         }
@@ -2205,8 +2238,8 @@ AST_T *ast_visit_gte_comp(AST_T *node)
         printf(KRED);
         printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
                left->line,
-               left->col, enum_names[left->type],
-               enum_names[right->type]);
+               left->col, ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -2237,7 +2270,7 @@ AST_T *ast_visit_int_div(AST_T *node)
             printf("%d:%d -- Cannot divide objects of type '%s'\n",
                    left->line,
                    left->col,
-                   enum_names[left->type]);
+                   ast_enum_names[left->type]);
             exit(1);
         }
     }
@@ -2259,8 +2292,8 @@ AST_T *ast_visit_int_div(AST_T *node)
         printf("%d:%d -- Cannot divide objects of type '%s' and '%s'\n",
                left->line,
                left->col,
-               enum_names[left->type],
-               enum_names[right->type]);
+               ast_enum_names[left->type],
+               ast_enum_names[right->type]);
         exit(1);
     }
 }
@@ -2294,6 +2327,299 @@ AST_T *ast_visit_while_loop(AST_T *node)
 AST_T *ast_visit_ret_statement(AST_T *node)
 {
     return ast_visit(node->return_expr);
+}
+
+AST_T *ast_visit_type_cast(AST_T *node)
+{
+    AST_T *ret;
+    node->var_def_val = ast_visit(node->var_def_expr);
+    switch (node->var_def_val->type)
+    {
+    case AST_NOOP:
+    {
+        switch (node->cast_type)
+        {
+        case TO_INT:
+        {
+            ret = init_ast(AST_INT, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            return ret;
+        }
+        case TO_FLOAT:
+        {
+            ret = init_ast(AST_FLOAT, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            return ret;
+        }
+        case TO_STR:
+        {
+            ret = init_ast(AST_STR, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->str_val = "";
+            return ret;
+        }
+        case TO_BOOL:
+        {
+            ret = init_ast(AST_BOOL, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            return ret;
+        }
+        case TO_ARR:
+        {
+            ret = init_ast(AST_ARR, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            return ret;
+        }
+        default:
+            break;
+        }
+        break;
+    }
+    case AST_BOOL:
+    {
+        switch (node->cast_type)
+        {
+        case TO_INT:
+        {
+            ret = init_ast(AST_INT, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->int_val = node->var_def_val->is_true;
+            return ret;
+        }
+        case TO_FLOAT:
+        {
+            ret = init_ast(AST_FLOAT, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->float_val = (float)node->var_def_val->is_true;
+            return ret;
+        }
+        case TO_STR:
+        {
+            ret = init_ast(AST_STR, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->str_val = node->var_def_val->is_true ? "True" : "False";
+            ret->arr_size = node->var_def_val->is_true ? 5 : 6;
+            return ret;
+        }
+        case TO_BOOL:
+        {
+            node->var_def_val->scope = node->scope;
+            node->parent = node->parent;
+            return node->var_def_val;
+        }
+        default:
+            break;
+        }
+        break;
+    }
+    case AST_INT:
+    {
+        switch (node->cast_type)
+        {
+        case TO_INT:
+        {
+            node->var_def_val->scope = node->scope;
+            node->parent = node->parent;
+            return node->var_def_val;
+        }
+        case TO_FLOAT:
+        {
+            ret = init_ast(AST_FLOAT, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->float_val = (float)node->var_def_val->int_val;
+            return ret;
+        }
+        case TO_BOOL:
+        {
+            ret = init_ast(AST_BOOL, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->is_true = node->var_def_val->int_val ? 1 : 0;
+            return ret;
+        }
+        case TO_STR:
+        {
+            ret = init_ast(AST_STR, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->str_val = calloc(MAX_NUM_SPACE, sizeof(char));
+            sprintf(ret->str_val, "%ld", node->var_def_val->int_val);
+            ret->arr_size = strlen(ret->str_val);
+            return ret;
+        }
+        default:
+            break;
+        }
+        break;
+    }
+    case AST_FLOAT:
+    {
+        switch (node->cast_type)
+        {
+        case TO_INT:
+        {
+            ret = init_ast(AST_INT, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->int_val = node->var_def_val->float_val;
+            return ret;
+        }
+        case TO_FLOAT:
+        {
+            node->var_def_val->scope = node->scope;
+            node->parent = node->parent;
+            return node->var_def_val;
+        }
+        case TO_BOOL:
+        {
+            ret = init_ast(AST_BOOL, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->is_true = node->var_def_val->float_val ? 1 : 0;
+            return ret;
+        }
+        case TO_STR:
+        {
+            ret = init_ast(AST_STR, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->str_val = calloc(MAX_NUM_SPACE, sizeof(char));
+            sprintf(ret->str_val, "%.2f", node->var_def_val->float_val);
+            ret->arr_size = strlen(ret->str_val);
+            return ret;
+        }
+        default:
+            break;
+        }
+        break;
+    }
+    case AST_ARR:
+    {
+        if (node->cast_type == TO_STR)
+        {
+            ret = init_ast(AST_STR, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->str_val = get_arr_as_string(node->var_def_val);
+            ret->arr_size = strlen(ret->str_val);
+            return ret;
+        }
+        else if (node->cast_type == TO_BOOL)
+        {
+            ret = init_ast(AST_BOOL, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->is_true = node->var_def_val->arr_size ? 1 : 0;
+            return ret;
+        }
+        else if (node->cast_type == TO_ARR)
+        {
+            node->var_def_val->scope = node->scope;
+            node->parent = node->parent;
+            return node->var_def_val;
+        }
+        break;
+    }
+    case AST_STR:
+    {
+        switch (node->cast_type)
+        {
+        case TO_INT:
+        {
+            char *to_conv = node->var_def_val->str_val;
+            char *p = to_conv;
+            errno = 0;
+            long int val = strtol(to_conv, &p, 10);
+            if ((errno != 0) || (to_conv == p) || (*p != 0))
+            {
+                printf(KRED);
+                printf("%d:%d -- Invalid literal for int() with base 10: '%s'\n", node->line, node->col, node->var_def_val->str_val);
+                exit(1);
+            }
+            ret = init_ast(AST_INT, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->int_val = val;
+            return ret;
+        }
+        case TO_FLOAT:
+        {
+            char *to_conv = node->var_def_val->str_val;
+            char *p = to_conv;
+            errno = 0;
+            float val = strtof(to_conv, &p);
+            if ((errno != 0) || (to_conv == p) || (*p != 0))
+            {
+                printf(KRED);
+                printf("%d:%d -- Could not convert STR to FLOAT: '%s'\n", node->line, node->col, node->var_def_val->str_val);
+                exit(1);
+            }
+            ret = init_ast(AST_FLOAT, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            ret->float_val = val;
+            return ret;
+        }
+        case TO_BOOL:
+        {
+            ret = init_ast(AST_BOOL, node->var_def_expr->line, node->var_def_expr->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            if (node->var_def_val->str_val == NULL)
+                ret->is_true = 0;
+            else if (strncmp(node->var_def_val->str_val, "True", 5) == 0)
+                ret->is_true = 1;
+            else if (strncmp(node->var_def_val->str_val, "False", 6) == 0)
+                ret->is_true = 0;
+            else
+                ret->is_true = node->var_def_val->arr_size ? 1 : 0;
+            return ret;
+        }
+        case TO_ARR:
+        {
+            ret = init_ast(AST_ARR, node->line, node->col);
+            ret->scope = node->scope;
+            ret->parent = node->parent;
+            if (node->var_def_val->str_val != NULL)
+            {
+                ret->arr_size = strlen(node->var_def_val->str_val);
+                ret->arr = calloc(ret->arr_size, sizeof(struct AST_STRUCT *));
+                for (int i = 0; i < ret->arr_size; i++)
+                {
+                    ret->arr[i] = init_ast(AST_STR, node->line, node->col);
+                    ret->arr[i]->arr_size = 1;
+                    ret->arr[i]->str_val = calloc(2, sizeof(char));
+                    strncpy(ret->arr[i]->str_val, &node->var_def_val->str_val[i], 1);
+                    ret->arr[i]->str_val[1] = '\0';
+                }
+            }
+            return ret;
+        }
+        case TO_STR:
+        {
+            node->var_def_val->scope = node->scope;
+            node->parent = node->parent;
+            return node->var_def_val;
+        }
+        default:
+            break;
+        }
+    }
+    default:
+        break;
+    }
+    printf(KRED);
+    printf("%d:%d -- Type '%s' cannot be converted to %s\n", node->var_def_expr->line, node->var_def_expr->col, ast_enum_names[node->var_def_val->type], cast_type_enum_names[node->cast_type]);
+    exit(1);
 }
 
 AST_T *ast_visit_break_statement(AST_T *node)
@@ -2379,6 +2705,8 @@ AST_T *__visit_ret_stmnt__(AST_T *node, AST_T *to_visit)
 AST_T *init_ast(int type, unsigned int line, unsigned int col)
 {
     AST_T *ast = calloc(1, sizeof(struct AST_STRUCT));
+
+    ast->cast_type = NONE;
 
     ast->scope = (void *)0;
     ast->global_scope = (void *)0;

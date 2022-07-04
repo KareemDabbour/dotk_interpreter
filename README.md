@@ -46,7 +46,7 @@ More print examples can be seen in `examples/print.k`
 
 ## Variable Declarations
 
-Float, Int, String and Boolean variables can be declared by using the key word `var`.
+Float, Int, String, Array and Boolean variables can be declared by using the key word `var`.
 
 The following code is an example of how to declare an int var `x`:
 
@@ -55,6 +55,37 @@ var x = 41;
 ```
 
 More variable declaration examples can be seen in `examples/variables.k`
+
+## Type Casting
+Values in `Dot-K` can be type casted to `Boolean`, `Float`, `Int`, `Str` and `Array`. 
+The following code contains examples of valid type casts:
+```py
+print(int(0));        # Output: 0
+print(int(1));        # Output: 1
+print(int("1"));      # Output: 1
+print(int(1.1));      # Output: 1
+print(float());       # Output: 0.00
+print(float(1.1));    # Output: 1.10
+print(float("1.1"));  # Output: 1.10
+print(float(1));      # Output: 1.00
+print(str());         # Output: ""
+print(str(1.1));      # Output: "1.10"
+print(str(1));        # Output: "1"
+print(str({1,2,3}));  # Output: "[1, 2, 3]"
+print(bool());        # Output: False
+print(bool(0));       # Output: False
+print(bool(0.0));     # Output: False
+print(bool(1));       # Output: True
+print(bool(1.1));     # Output: True
+print(bool({}));      # Output: False
+print(bool({1,2,3})); # Output: True
+print(bool(""));      # Output: False
+print(bool("True"));  # Output: True
+print(bool("False")); # Output: False
+print(arr());         # Output: []
+print(arr({1,2,3}));  # Output: [1, 2, 3]
+print(arr("Hi"));     # Output: ["H", "i"]
+``` 
 
 ## While loops
 Using the key word `while`, while loops can be declared.
@@ -267,7 +298,7 @@ For example, the two following expressions would be expressed as such:
 
 ### Visiting
 
-Now that we have our ASTs lined up, all that's left is to transverse them properly. This is done by controlling whether we use an inorder, preorder or postorder to visit the AST subtree of a given node.
+Now that we have our ASTs lined up, all that's left is to transverse them properly. This is done by controlling whether we use an inorder, preorder or postorder approach to visit the AST subtree of a given node.
 
 ## Syntax Highlighting
 
