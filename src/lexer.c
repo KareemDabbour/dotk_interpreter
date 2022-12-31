@@ -118,6 +118,9 @@ token_T *lexer_get_next_token(lexer_T *lexer)
         case ';':
             return lexer_advance_with_token(lexer, init_token(TOKEN_SEMI, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
 
+        case ':':
+            return lexer_advance_with_token(lexer, init_token(TOKEN_COLON, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
+
         case '(':
             return lexer_advance_with_token(lexer, init_token(TOKEN_LPAR, lexer_get_current_as_string(lexer), lexer->line, lexer->col));
 

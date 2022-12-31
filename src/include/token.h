@@ -31,7 +31,8 @@ typedef struct TOKEN_STRUCT
         TOKEN_OR,       // 24
         TOKEN_RSBRA,    // 25
         TOKEN_LSBRA,    // 26
-        TOKEN_MOD       // 27
+        TOKEN_MOD,      // 27
+        TOKEN_COLON     // 28
     } type;
     char *value;
     unsigned int line;

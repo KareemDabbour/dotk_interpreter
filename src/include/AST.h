@@ -1,5 +1,6 @@
 #ifndef AST_H
 #include <stdlib.h>
+#include <math.h>
 #include <errno.h>
 #define AST_H
 #define MAX_STR_CHAR 2000
@@ -53,7 +54,10 @@ typedef struct AST_STRUCT
         AST_MOD,                  // 30
         AST_WHILE_LOOP,           // 31
         AST_BREAK_STMNT,          // 32
-        AST_TYPE_CAST             // 33
+        AST_TYPE_CAST,            // 33
+        AST_FOR_EACH,             // 34
+        AST_CONTINUE,             // 35
+        AST_RANGE                 // 36
     } type;
 
     // AST TYPE CAST
@@ -116,7 +120,6 @@ typedef struct AST_STRUCT
 
     // AST WHILE
     struct AST_STRUCT *while_predicate;
-    struct AST_STRUCT *while_body;
 
     // AST RET STATEMENT
     struct AST_STRUCT *return_expr;
@@ -136,6 +139,21 @@ typedef struct AST_STRUCT
 
     // AST BOOL
     int is_true;
+
+    // AST FOR EACH
+    struct AST_STRUCT *for_each_var;
+    struct AST_STRUCT *for_each_arr;
+    struct AST_STRUCT *for_each_arr_expr;
+    int for_each_index;
+
+    // AST RANGE
+    int range_start;
+    int range_end;
+    int range_step;
+    int range_size;
+
+    // Loops
+    struct AST_STRUCT *loop_body;
 
     // Line and Column values
     unsigned int line;

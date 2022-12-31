@@ -31,7 +31,7 @@
 		"ctrl-statements":{
 			"patterns":[{
 				"name":"keyword.control.dotk",
-                "match":"\\b(if|else|var|def|ret|while|break)\\b"
+                "match":"\\b(if|else|var|def|return|while|break|continue|for)\\b"
 			}]
 		},
 		"numbers":{
@@ -49,7 +49,7 @@
 		"keywords": {
 			"patterns": [{
 				"name": "support.constant",
-				"match": "\\b(True|False|NULL)\\b"
+				"match": "\\b(True|False|NULL|list|int|str|bool|float)\\b"
 			}]
 		},
 		"expression": {
@@ -65,7 +65,7 @@
 				{
 					"captures":{
 						"1":{
-							"name": "entity.name.function.dotk"
+							"name": "support.function.dotk"
 						}
 					},
 					"match": "\\b(\\w+)(?:\\s+([-a-zA-Z0-9_]+))?\\s*(\\()",

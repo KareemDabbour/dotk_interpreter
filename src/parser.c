@@ -31,7 +31,9 @@ static AST_T *parser_parse_str(parser_T *parser, scope_T *scope);
 
 static AST_T *parser_parse_id(parser_T *parser, scope_T *scope);
 
-const char *token_names[28] = {
+static AST_T *parser_parse_continue(parser_T *parser, scope_T *scope);
+
+const char *token_names[29] = {
     "IDENTIFIER",                       // 0
     "EQUALS",                           // 1
     "STRING",                           // 2
@@ -59,7 +61,8 @@ const char *token_names[28] = {
     "OR COMPARATOR",                    // 24
     "LEFT SQUARE BRACKET",              // 25
     "RIGHT SQUARE BRACKET",             // 26
-    "MODULUS OPERATOR"                  // 27
+    "MODULUS OPERATOR",                 // 27
+    "COLON"                             // 28
 };
 
 static scope_T *get_node_scope(parser_T *parser, AST_T *node)
@@ -116,7 +119,8 @@ AST_T *parser_parse_statements(parser_T *parser, scope_T *scope)
     }
     if ((ast_statement->type != AST_FUNC_DEF &&
          ast_statement->type != AST_IF_STMNT &&
-         ast_statement->type != AST_WHILE_LOOP) ||
+         ast_statement->type != AST_WHILE_LOOP &&
+         ast_statement->type != AST_FOR_EACH) ||
         parser->current_token->type == TOKEN_SEMI)
         parser_eat(parser, TOKEN_SEMI);
     else
@@ -141,7 +145,8 @@ AST_T *parser_parse_statements(parser_T *parser, scope_T *scope)
             break;
         if ((ast_statement->type != AST_FUNC_DEF &&
              ast_statement->type != AST_IF_STMNT &&
-             ast_statement->type != AST_WHILE_LOOP) ||
+             ast_statement->type != AST_WHILE_LOOP &&
+             ast_statement->type != AST_FOR_EACH) ||
             parser->current_token->type == TOKEN_SEMI)
             parser_eat(parser, TOKEN_SEMI);
         else
@@ -190,7 +195,6 @@ AST_T *parser_parse_expr(parser_T *parser, scope_T *scope, AST_T *parent)
             break;
         }
         case TOKEN_MOD:
-
         {
             temp->type = AST_MOD;
             parser_eat(parser, TOKEN_MOD);
@@ -522,11 +526,42 @@ AST_T *parser_parse_while_loop(parser_T *parser, scope_T *scope)
 
     parser_eat(parser, TOKEN_LBRA);
 
-    ast_while->while_body = parser_parse_statements(parser, scope);
-    ast_while->while_body->parent = ast_while;
+    ast_while->loop_body = parser_parse_statements(parser, scope);
+    ast_while->loop_body->parent = ast_while;
     ast_while->scope = scope;
+    ast_while->global_scope = parser->scope;
     parser_eat(parser, TOKEN_RBRA);
     return ast_while;
+}
+
+AST_T *parser_parse_foreach(parser_T *parser, scope_T *scope)
+{
+    AST_T *ast_foreach = init_ast(AST_FOR_EACH, parser->current_token->line, parser->current_token->col);
+    ast_foreach->scope = scope;
+    ast_foreach->global_scope = parser->scope;
+
+    parser_eat(parser, TOKEN_ID); // Eat the 'for'
+    parser_eat(parser, TOKEN_LPAR);
+
+    ast_foreach->for_each_var = init_ast(AST_VAR_DEF, parser->current_token->line, parser->current_token->col);
+    ast_foreach->for_each_var->var_def_var_name = parser->current_token->value;
+    ast_foreach->for_each_var->scope = scope;
+    ast_foreach->for_each_var->global_scope = parser->scope;
+    parser_eat(parser, TOKEN_ID);
+
+    parser_eat(parser, TOKEN_COLON);
+
+    ast_foreach->for_each_arr_expr = parser_parse_expr(parser, scope, ast_foreach);
+    parser_eat(parser, TOKEN_RPAR);
+
+    parser_eat(parser, TOKEN_LBRA);
+
+    ast_foreach->loop_body = parser_parse_statements(parser, scope);
+    ast_foreach->loop_body->parent = ast_foreach;
+    ast_foreach->scope = scope;
+    ast_foreach->global_scope = parser->scope;
+    parser_eat(parser, TOKEN_RBRA);
+    return ast_foreach;
 }
 
 AST_T *parser_parse_return_stmnt(parser_T *parser, scope_T *scope)
@@ -547,6 +582,15 @@ AST_T *parser_parse_break_stmnt(parser_T *parser, scope_T *scope)
     ast_break->scope = scope;
     ast_break->global_scope = parser->scope;
     return ast_break;
+}
+
+AST_T *parser_parse_continue(parser_T *parser, scope_T *scope)
+{
+    AST_T *ast_continue = init_ast(AST_CONTINUE, parser->current_token->line, parser->current_token->col);
+    parser_eat(parser, TOKEN_ID); // eat the 'continue'
+    ast_continue->scope = scope;
+    ast_continue->global_scope = parser->scope;
+    return ast_continue;
 }
 
 AST_T *parser_parse_var(parser_T *parser, scope_T *scope)
@@ -689,7 +733,7 @@ AST_T *parser_parse_id(parser_T *parser, scope_T *scope)
     {
         return parser_parse_while_loop(parser, scope);
     }
-    else if (strncmp(parser->current_token->value, "ret", 4) == 0)
+    else if (strncmp(parser->current_token->value, "return", 7) == 0)
     {
         return parser_parse_return_stmnt(parser, scope);
     }
@@ -709,13 +753,17 @@ AST_T *parser_parse_id(parser_T *parser, scope_T *scope)
     {
         return parser_parse_type_cast(parser, scope, TO_BOOL);
     }
-    else if (strncmp(parser->current_token->value, "arr", 4) == 0)
+    else if (strncmp(parser->current_token->value, "list", 5) == 0)
     {
         return parser_parse_type_cast(parser, scope, TO_ARR);
     }
     else if (strncmp(parser->current_token->value, "break", 6) == 0)
     {
         return parser_parse_break_stmnt(parser, scope);
+    }
+    else if (strncmp(parser->current_token->value, "continue", 9) == 0)
+    {
+        return parser_parse_continue(parser, scope);
     }
     else if (strncmp(parser->current_token->value, "True", 5) == 0)
     {
@@ -724,6 +772,10 @@ AST_T *parser_parse_id(parser_T *parser, scope_T *scope)
     else if (strncmp(parser->current_token->value, "False", 6) == 0)
     {
         return parser_parse_bool(parser, scope, 0);
+    }
+    else if (strncmp(parser->current_token->value, "for", 4) == 0)
+    {
+        return parser_parse_foreach(parser, scope);
     }
     else if (strncmp(parser->current_token->value, "NULL", 5) == 0)
     {

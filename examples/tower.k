@@ -1,6 +1,6 @@
 def tower(x, src, dest, aux){
     if(x==0){
-        ret;
+        return;
     }
     tower(x-1, src, aux, dest);
     print("Move the disk " + x + " from " + src + " to " + dest);

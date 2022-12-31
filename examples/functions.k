@@ -13,14 +13,14 @@ def bar(x, y, z){
 }
 
 def foo2(x){
-    ret x + 1;
+    return x + 1;
 }
 
 def bar2(x){
     if(x == 0){
-        ret 1;
+        return 1;
     }else{
-        ret 2.13 * x;
+        return 2.13 * x;
     }
 }
 

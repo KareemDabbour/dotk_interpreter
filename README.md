@@ -8,7 +8,7 @@ _To read more about the implementation, please see the `Implementation` section.
 
 ## Math
 
-`Dot-K` Can handle very basic math, including addition, subtraction, multiplication, division and integer division.
+`Dot-K` Can handle very basic math, including addition, subtraction, multiplication, division, integer division and modulo.
 It naturally follows the order of operations unless specified otherwise with parentheses.
 
 ```py
@@ -17,7 +17,10 @@ It naturally follows the order of operations unless specified otherwise with par
 *  # Multiplication
 /  # Division
 // # Integer Division
+%  # Modulo Operator 
 ```
+
+`Dot-K` also has the built-in function `abs` that returns the absolute value of type `INT` and `FLOAT`.  
 
 More math examples can be seen in `examples/math.k`
 
@@ -82,12 +85,21 @@ print(bool({1,2,3})); # Output: True
 print(bool(""));      # Output: False
 print(bool("True"));  # Output: True
 print(bool("False")); # Output: False
-print(arr());         # Output: []
-print(arr({1,2,3}));  # Output: [1, 2, 3]
-print(arr("Hi"));     # Output: ["H", "i"]
+print(list());        # Output: []
+print(list({1,2,3})); # Output: [1, 2, 3]
+print(list("Hi"));    # Output: ["H", "i"]
+print(list(range(2)));# Output: [0, 1]
 ``` 
-
-## While loops
+## Loops
+### For each loops
+Using the key word `for`, a for each loop can be declared.
+The following code contains how a for each loop should be structured:
+```js
+for(<VAR_NAME> : <ITTERABLE>){
+    <CODE_TO_BE_EXECUTED>;
+}
+```
+### While loops
 Using the key word `while`, while loops can be declared.
 The following code contains how while loop should be structured:
 ```js
@@ -96,7 +108,7 @@ while(<PREDICATE>){
 }
 ```  
 ### Break statements
-With the key word `break`, one can preemptively exit a while loop. The following code is an example of that:
+With the key word `break`, one can preemptively exit a loop. The following code snippets are examples of that:
 ```py
 while(True){
     print("This is inside the while loop");
@@ -107,26 +119,59 @@ while(True){
 }
 # Output: "This is inside the while loop"
 ```
+```py
+for(x : range(10)){
+    if(x > 4){
+        print(x);
+        break;
+    }
+}
+# Output: 5 
+```
 ### Return statements
-In `Dot-K` one can use the `ret` in conjunction with `while loops` to assign variables. The following code is an example:
+In `Dot-K` one can use the `return` in conjunction with `while` and `for each` loops to assign variables. For example:
 ```js
 var x = 3;
 var k = while(x > 0){
             if(x == 1){
-                ret x;
+                return x;
             }
             x = x - 1;
-        }
+        };
+```
+```js
+var x = 3;
+var k = for (i : range(10)){
+            if ((i % x) == 1){
+                return i;
+            }
+        };
 ```
 ```py
 print("Val of k is " + k);
 # Output: "Val of k is 1"  
 ```
 
-More while-loop examples can be seen in `examples/while-loops.k`
+More loop examples can be seen in `examples/loops.k`
 ## Arrays
 
 Arrays containing Floats, Ints, Strings and/or Arrays can be explicitly declared or declared with a set size and default value. 
+
+### Ranged Objects
+Much like `python`, `Dot-K` has a `range` built-in function. There are three ways this function can be used. 
+```py
+# range(end)
+list(range(3));
+# Output: [0, 1, 2]
+
+# range(start, end)
+list(range(4,8));
+# Output: [4, 5, 6, 7]
+
+# range(start, end, step)
+list(range(-6,-10,-3));
+# Output: [6, 9]
+```
 
 ### Fixed size array
 The following code containts examples of how to declare fixed size arrays in `Dot-K`:
@@ -150,7 +195,7 @@ The following code containts examples of how to explicit arrays in `Dot-K`:
 
 ### Indexing
 Arrays in `Dot-K` can be indexed much like in Python *_without slices_*.
-For example, indexing can be done with negative numbers (`-1 referring to the end of the array`). 
+For example, indexing can be done with negative numbers (`-1 referring to the last element of the array`). 
 
 More array examples can be seen in `examples/arrays.k`
 
@@ -186,18 +231,18 @@ foo("with arguments!");
 
 ### Functions with Return Statements
 
-The following code is an example of how to define and call functions `foo` and `bar` that take advantage of the `ret` key word to return data:
+The following code is an example of how to define and call functions `foo` and `bar` that take advantage of the `return` key word to return data:
 
 ```python
 def foo(x){
-    ret x + 1;
+    return x + 1;
 }
 
 def bar(x){
     if(x == 0){
-        ret 1;
+        return 1;
     }else{
-        ret 2.13 * x;
+        return 2.13 * x;
     }
 }
 
@@ -213,9 +258,9 @@ The following code is an example of how `Dot-K` can handle simple recursion.
 ```py 
 def fact(x){
     if(x < 2){
-        ret 1;
+        return 1;
     }else{
-        ret x * fact(x-1);
+        return x * fact(x-1);
     }
 }
 print("5! == " + fact(5));

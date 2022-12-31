@@ -1,12 +1,12 @@
 def fib_rec(x){
     if(x <= 0){
-        ret 0;  
+        return 0;  
     }
 
     if (x == 1 || x == 2){
-        ret 1;
+        return 1;
     }else{
-        ret fib_rec(x-2) + fib_rec(x-1);
+        return fib_rec(x-2) + fib_rec(x-1);
     }
 }
 
@@ -15,12 +15,10 @@ def fib(n){
     s[0] = 1;
     s[1] = 1;
 
-    var i = 2;
-    while(i<n){
+    for(i : range(2,n)){
         s[i] = s[i-1] + s[i-2];
-        i = i + 1;
     }
-    ret s;
+    return s;
 }
 
 var k = 13;

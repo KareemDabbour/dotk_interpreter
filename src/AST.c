@@ -1,13 +1,16 @@
 #include "include/AST.h"
 #include "include/scope.h"
-
 #include <stdio.h>
 #include <string.h>
 
 static AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size);
 static AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size);
+static AST_T *builtin_function_not(AST_T *node, AST_T **args, size_t args_size);
+static AST_T *builtin_function_abs(AST_T *node, AST_T **args, size_t args_size);
+static AST_T *builtin_function_range(AST_T *node, AST_T **args, size_t args_size);
 static AST_T *__visit_ret_stmnt__(AST_T *node, AST_T *to_visit);
 static AST_T *__visit_break_stmnt__(AST_T *node, AST_T *to_visit);
+static AST_T *__visit_continue_stmnt__(AST_T *node, AST_T *to_visit);
 static AST_T *ast_visit_func_call(AST_T *node);
 static AST_T *ast_visit_func_def(AST_T *node);
 static AST_T *ast_visit_var_def(AST_T *node);
@@ -30,8 +33,10 @@ static AST_T *ast_visit_div(AST_T *node);
 static AST_T *ast_visit_int_div(AST_T *node);
 static AST_T *ast_visit_if_statement(AST_T *node);
 static AST_T *ast_visit_while_loop(AST_T *node);
+static AST_T *ast_visit_foreach_loop(AST_T *node);
 static AST_T *ast_visit_ret_statement(AST_T *node);
 static AST_T *ast_visit_break_statement(AST_T *node);
+static AST_T *ast_visit_continue(AST_T *node);
 static AST_T *ast_visit_and(AST_T *node);
 static AST_T *ast_visit_or(AST_T *node);
 static AST_T *ast_visit_not_eq_comp(AST_T *node);
@@ -51,8 +56,8 @@ const char *cast_type_enum_names[6] = {
     "LIST"};
 
 const char *
-    ast_enum_names[34] = {"NULL",
-                          "FUNCTION CALL",
+    ast_enum_names[37] = {"NULL",
+                          "FUNCTION",
                           "FUNCTION DEFINITION",
                           "VARIABLE DEFINITION",
                           "VAR",
@@ -84,7 +89,10 @@ const char *
                           "MODULUS",
                           "WHILE LOOP",
                           "BREAK STATEMENT",
-                          "TYPE CAST"};
+                          "TYPE CAST",
+                          "FOR EACH LOOP",
+                          "CONTINUE",
+                          "RANGE"};
 
 void print_arr(AST_T *arr)
 {
@@ -641,6 +649,7 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                            x_elem->line,
                            x_elem->col,
                            ast_enum_names[x_elem->type]);
+                    printf(KNRM);
                     exit(1);
                 }
             }
@@ -662,6 +671,7 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                        x_elem->col,
                        ast_enum_names[x_elem->type],
                        ast_enum_names[y_elem->type]);
+                printf(KNRM);
                 exit(1);
             }
             if (ret == 0)
@@ -680,6 +690,7 @@ AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size)
                node->line,
                node->col,
                args_size);
+        printf(KNRM);
         exit(1);
     }
     AST_T *ret = init_ast(AST_INT, node->line, node->col);
@@ -689,15 +700,18 @@ AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size)
     switch (visited_ast->type)
     {
     case AST_STR:
-        ret->int_val = strlen(visited_ast->str_val);
+        ret->int_val = visited_ast->arr_size;
         break;
     case AST_ARR:
         ret->int_val = visited_ast->arr_size;
         break;
-
+    case AST_RANGE:
+        ret->int_val = visited_ast->range_size;
+        break;
     default:
         printf(KRED);
         printf("%d:%d -- Cannot get length of type '%s'.", node->line, node->col, ast_enum_names[visited_ast->type]);
+        printf(KNRM);
         exit(1);
     }
     return ret;
@@ -741,6 +755,11 @@ AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size)
                 printf("False\n");
             break;
         }
+        case AST_RANGE:
+        {
+            printf("<Range Object at <%p>>\n", &node);
+            break;
+        }
         default:
             printf("%s\n", ast_enum_names[visited_ast->type]);
             break;
@@ -758,6 +777,7 @@ AST_T *builtin_function_not(AST_T *node, AST_T **args, size_t args_size)
                node->line,
                node->col,
                args_size);
+        printf(KNRM);
         exit(1);
     }
     AST_T *ret = init_ast(AST_BOOL, node->line, node->col);
@@ -765,6 +785,127 @@ AST_T *builtin_function_not(AST_T *node, AST_T **args, size_t args_size)
     ret->global_scope = node->global_scope;
     AST_T *visited_ast = ast_visit(args[0]);
     ret->is_true = visited_ast->is_true ? 0 : 1;
+    return ret;
+}
+
+AST_T *builtin_function_abs(AST_T *node, AST_T **args, size_t args_size)
+{
+    if (args_size == 0 || args_size > 1)
+    {
+        printf(KRED);
+        printf("%d:%d -- 'abs()' takes exactly one argument (%ld given)\n",
+               node->line,
+               node->col,
+               args_size);
+        printf(KNRM);
+        exit(1);
+    }
+    AST_T *ret = init_ast(AST_NOOP, node->line, node->col);
+    ret->scope = node->scope;
+    ret->global_scope = node->global_scope;
+    AST_T *visted_ast = ast_visit(args[0]);
+    switch (visted_ast->type)
+    {
+    case AST_INT:
+        ret->type = AST_INT;
+        ret->int_val = abs(visted_ast->int_val);
+        break;
+    case AST_FLOAT:
+        ret->type = AST_FLOAT;
+        ret->float_val = fabs(visted_ast->float_val);
+        break;
+    default:
+        printf(KRED);
+        printf("%d:%d -- Cannot call 'abs()' with type %s can only be called on type INT or type FLOAT.\n",
+               node->line,
+               node->col,
+               ast_enum_names[visted_ast->type]);
+        printf(KNRM);
+        exit(1);
+    }
+    return ret;
+}
+
+AST_T *builtin_function_range(AST_T *node, AST_T **args, size_t args_size)
+{
+    if (args_size == 0 || args_size > 3)
+    {
+        printf(KRED);
+        printf("%d:%d -- 'range(end)', 'range(start, end)' or 'range(start, end, step)' takes one, two or three arguments (%ld given)\n",
+               node->line,
+               node->col,
+               args_size);
+        printf(KNRM);
+        exit(1);
+    }
+    AST_T *start_ast = (void *)0;
+    AST_T *end_ast = (void *)0;
+    AST_T *step_ast = (void *)0;
+    int start = 0;
+    int end = 0;
+    int step = 1;
+    if (args_size == 1)
+    {
+        end_ast = ast_visit(args[0]);
+        end = end_ast->int_val;
+    }
+    else if (args_size == 2)
+    {
+        start_ast = ast_visit(args[0]);
+        end_ast = ast_visit(args[1]);
+        start = start_ast->int_val;
+        end = end_ast->int_val;
+    }
+    else if (args_size == 3)
+    {
+        start_ast = ast_visit(args[0]);
+        end_ast = ast_visit(args[1]);
+        step_ast = ast_visit(args[2]);
+        start = start_ast->int_val;
+        end = end_ast->int_val;
+        step = step_ast->int_val;
+    }
+
+    if (start_ast != (void *)0 && (start_ast->type != AST_INT))
+    {
+        printf(KRED);
+        printf("%d:%d -- Cannot call 'range()' with start argument of type %s. Must be of type INT\n",
+               node->line,
+               node->col,
+               ast_enum_names[start_ast->type]);
+        printf(KNRM);
+        exit(1);
+    }
+    if ((end_ast->type != AST_INT))
+    {
+        printf(KRED);
+        printf("%d:%d -- Cannot call 'range()' with end argument of type %s. Must be of type INT\n",
+               node->line,
+               node->col,
+               ast_enum_names[end_ast->type]);
+        printf(KNRM);
+        exit(1);
+    }
+    if (step_ast != (void *)0 && (step_ast->type != AST_INT))
+    {
+        printf(KRED);
+        printf("%d:%d -- Cannot call 'range()' with step argument of type %s. Must be of type INT\n",
+               node->line,
+               node->col,
+               ast_enum_names[step_ast->type]);
+        printf(KNRM);
+        exit(1);
+    }
+    AST_T *ret = init_ast(AST_RANGE, node->line, node->col);
+    ret->scope = node->scope;
+    ret->global_scope = node->global_scope;
+    ret->parent = node->parent;
+    if (start > end && step > 0)
+        return ret;
+    ret->range_start = start;
+    ret->range_end = end;
+    ret->range_step = step;
+    ret->range_size = ceil((abs(start - end) + abs(step) - 1) / abs(step));
     return ret;
 }
 
@@ -817,6 +958,8 @@ AST_T *ast_visit(AST_T *node)
         return ast_visit_if_statement(node);
     case AST_WHILE_LOOP:
         return ast_visit_while_loop(node);
+    case AST_FOR_EACH:
+        return ast_visit_foreach_loop(node);
     case AST_BOOL:
         return ast_visit_bool(node);
     case AST_EQ_COMP:
@@ -835,6 +978,8 @@ AST_T *ast_visit(AST_T *node)
         return ast_visit_ret_statement(node);
     case AST_BREAK_STMNT:
         return ast_visit_break_statement(node);
+    case AST_CONTINUE:
+        return ast_visit_continue(node);
     case AST_ARR:
         return ast_visit_arr(node);
     case AST_ARR_DEF:
@@ -845,6 +990,8 @@ AST_T *ast_visit(AST_T *node)
         return ast_visit_arr_index(node);
     case AST_TYPE_CAST:
         return ast_visit_type_cast(node);
+    case AST_RANGE:
+        return node;
     case AST_NOOP:
         return node;
     default:
@@ -852,6 +999,59 @@ AST_T *ast_visit(AST_T *node)
         printf("%d:%d -- Uncaught statement of type: '%s'\n", node->line, node->col, ast_enum_names[node->type]);
         exit(1);
     }
+}
+
+int __remove__var_def(AST_T *node)
+{
+    int return_or_break = 0;
+    for (int i = 0; i < node->compound_size; i++)
+    {
+        if (node->compound_val[i]->type == AST_BREAK_STMNT ||
+            node->compound_val[i]->type == AST_RET_STMNT)
+        {
+            return_or_break = 1;
+            break;
+        }
+        switch (node->compound_val[i]->type)
+        {
+        case AST_WHILE_LOOP:
+        {
+            AST_T *rew = node->compound_val[i];
+            AST_T *t = ast_visit(node->compound_val[i]->while_predicate);
+            if (t->is_true)
+                if (__remove__var_def(node->compound_val[i]->loop_body))
+                    return 1;
+            break;
+        }
+        case AST_IF_STMNT:
+        {
+            if (ast_visit(node->compound_val[i]->if_predicate)->is_true)
+            {
+                if (node->compound_val[i]->if_body != NULL)
+                    if (__remove__var_def(node->compound_val[i]->if_body))
+                        return 1;
+            }
+            else
+            {
+                if (node->compound_val[i]->else_body != NULL)
+                    if (__remove__var_def(node->compound_val[i]->else_body))
+                        return 1;
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+
+    for (int i = 0; i < node->compound_size; i++)
+    {
+        if (node->compound_val[i]->type == AST_VAR_DEF)
+            scope_rem_var_def(node->scope, node->compound_val[i]->var_def_var_name);
+        if (node->compound_val[i]->type == AST_BREAK_STMNT || node->compound_val[i]->type == AST_RET_STMNT)
+            return return_or_break;
+    }
+    return return_or_break;
 }
 
 AST_T *ast_visit_func_call(AST_T *node)
@@ -862,7 +1062,10 @@ AST_T *ast_visit_func_call(AST_T *node)
         return builtin_function_len(node, node->func_call_args, node->func_call_args_size);
     if (strncmp(node->func_call_name, "not", 4) == 0)
         return builtin_function_not(node, node->func_call_args, node->func_call_args_size);
-
+    if (strncmp(node->func_call_name, "abs", 4) == 0)
+        return builtin_function_abs(node, node->func_call_args, node->func_call_args_size);
+    if (strncmp(node->func_call_name, "range", 6) == 0)
+        return builtin_function_range(node, node->func_call_args, node->func_call_args_size);
     AST_T *func_def = scope_get_func_def(
         node->global_scope,
         node->func_call_name);
@@ -905,31 +1108,33 @@ AST_T *ast_visit_func_call(AST_T *node)
     for (int i = 0; i < (int)node->func_call_args_size; i++)
         scope_add_var_def(func_def->func_body->scope, args[i]);
 
-    // Getting the number of variables declared in the function body
-    int num_var_def_in_func = 0;
-    for (int i = 0; i < func_def->func_body->compound_size; i++)
-    {
-        if (func_def->func_body->compound_val[i]->type == AST_VAR_DEF)
-            num_var_def_in_func++;
-    }
-    // Keep track of the variables declared in the function body
-    char *vars_to_be_removed[num_var_def_in_func];
-    for (int i = 0; i < func_def->func_body->compound_size; i++)
-    {
-        if (func_def->func_body->compound_val[i]->type == AST_VAR_DEF)
-            vars_to_be_removed[i] = func_def->func_body->compound_val[i]->var_def_var_name;
-    }
+    // // Getting the number of variables declared in the function body
+    // int num_var_def_in_func = 0;
+    // for (int i = 0; i < func_def->func_body->compound_size; i++)
+    // {
+    //     if (func_def->func_body->compound_val[i]->type == AST_VAR_DEF)
+    //         num_var_def_in_func++;
+    // }
+    // // Keep track of the variables declared in the function body
+    // char *vars_to_be_removed[num_var_def_in_func];
+    // for (int i = 0; i < func_def->func_body->compound_size; i++)
+    // {
+    //     if (func_def->func_body->compound_val[i]->type == AST_VAR_DEF)
+    //         vars_to_be_removed[i] = func_def->func_body->compound_val[i]->var_def_var_name;
+    // }
 
     // Visit the function body
     AST_T *visited_body = ast_visit(func_def->func_body);
+
+    // Remove variables declared in function body
+    __remove__var_def(func_def->func_body);
 
     // Remove param variable declarations from the function body
     for (int i = 0; i < (int)node->func_call_args_size; i++)
         scope_rem_var_def(func_def->func_body->scope, func_def->func_def_args[i]->var_name);
 
-    // Remove variables declared in function body
-    for (int i = 0; i < num_var_def_in_func; i++)
-        scope_rem_var_def(func_def->func_body->scope, vars_to_be_removed[i]);
+    // for (int i = 0; i < num_var_def_in_func; i++)
+    //     scope_rem_var_def(func_def->func_body->scope, vars_to_be_removed[i]);
 
     return visited_body;
 }
@@ -942,9 +1147,15 @@ AST_T *ast_visit_func_def(AST_T *node)
 
 AST_T *ast_visit_var_def(AST_T *node)
 {
-    node->var_def_val = ast_visit(node->var_def_expr);
-    scope_add_var_def(node->scope, node);
-    return node;
+    AST_T *ret = init_ast(AST_VAR_DEF, node->line, node->col);
+    ret->parent = node->parent;
+    ret->scope = node->scope;
+    ret->global_scope = node->global_scope;
+    ret->var_def_expr = node->var_def_expr;
+    ret->var_def_var_name = node->var_def_var_name;
+    ret->var_def_val = ast_visit(ret->var_def_expr);
+    scope_add_var_def(node->scope, ret);
+    return ret;
 }
 
 AST_T *ast_visit_arr(AST_T *node)
@@ -1265,7 +1476,7 @@ AST_T *ast_visit_var(AST_T *node)
 
 AST_T *ast_visit_str(AST_T *node)
 {
-    if (node->str_val != (void *)0)
+    if ((node->str_val != (void *)0) && node->arr_size != 0)
         node->is_true = 1;
     return node;
 }
@@ -1319,9 +1530,11 @@ AST_T *ast_visit_add(AST_T *node)
         case AST_STR:
         {
             AST_T *ret = init_ast(AST_STR, left->line, left->col);
-            char *str = calloc(strlen(left->str_val) + strlen(right->str_val) + 1, sizeof(char));
+            int str_len = strlen(left->str_val) + strlen(right->str_val);
+            char *str = calloc(str_len + 1, sizeof(char));
             strcpy(str, left->str_val);
             ret->str_val = strcat(str, right->str_val);
+            ret->arr_size = str_len;
             return ret;
         }
         case AST_INT:
@@ -1376,6 +1589,7 @@ AST_T *ast_visit_add(AST_T *node)
             char str[MAX_NUM_SPACE + MAX_STR_CHAR];
             sprintf(str, "%.2f%s", left->float_val, right->str_val);
             int len = strlen(str);
+            ret->arr_size = len;
             ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
@@ -1383,7 +1597,7 @@ AST_T *ast_visit_add(AST_T *node)
         case AST_ARR:
         {
             printf(KRED);
-            printf("%d:%d -- Can only concatenate array (not 'FLOAT') to array\n",
+            printf("%d:%d -- Can only concatenate LIST (not 'FLOAT') to LIST\n",
                    left->line,
                    left->col);
             exit(1);
@@ -1407,7 +1621,8 @@ AST_T *ast_visit_add(AST_T *node)
             AST_T *ret = init_ast(AST_STR, left->line, left->col);
             char str[MAX_NUM_SPACE + MAX_STR_CHAR];
             sprintf(str, "%ld%s", left->int_val, right->str_val);
-            int len = strlen(str) + 1;
+            int len = strlen(str);
+            ret->arr_size = len;
             ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
@@ -1415,7 +1630,7 @@ AST_T *ast_visit_add(AST_T *node)
         case AST_ARR:
         {
             printf(KRED);
-            printf("%d:%d -- Can only concatenate array (not 'INT') to array\n",
+            printf("%d:%d -- Can only concatenate LIST (not 'INT') to LIST\n",
                    left->line,
                    left->col);
             exit(1);
@@ -1434,6 +1649,7 @@ AST_T *ast_visit_add(AST_T *node)
         {
             sprintf(str, "%s%.2f", left->str_val, right->float_val);
             int len = strlen(str);
+            ret->arr_size = len;
             ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
@@ -1442,6 +1658,7 @@ AST_T *ast_visit_add(AST_T *node)
         {
             sprintf(str, "%s%ld", left->str_val, right->int_val);
             int len = strlen(str);
+            ret->arr_size = len;
             ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
@@ -1450,6 +1667,7 @@ AST_T *ast_visit_add(AST_T *node)
         {
             sprintf(str, "%s%s", left->str_val, right->is_true ? "True" : "False");
             int len = strlen(str);
+            ret->arr_size = len;
             ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
@@ -1458,6 +1676,7 @@ AST_T *ast_visit_add(AST_T *node)
         {
             sprintf(str, "%sNULL", left->str_val);
             int len = strlen(str);
+            ret->arr_size = len;
             ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
@@ -1466,10 +1685,21 @@ AST_T *ast_visit_add(AST_T *node)
         {
             char *arr_str = get_arr_as_string(right);
             AST_T *ret = init_ast(AST_STR, left->line, left->col);
-            char *str = calloc(strlen(left->str_val) + strlen(arr_str) + 1, sizeof(char));
+            int len = strlen(left->str_val) + strlen(arr_str);
+            char *str = calloc(len + 1, sizeof(char));
+            ret->arr_size = len;
             strcpy(str, left->str_val);
             ret->str_val = strcat(str, arr_str);
             free(arr_str);
+            return ret;
+        }
+        case AST_RANGE:
+        {
+            sprintf(str, "%s<Range Object at <%p>>", left->str_val, &right);
+            int len = strlen(str);
+            ret->arr_size = len;
+            ret->str_val = calloc(len + 1, sizeof(char));
+            strncpy(ret->str_val, str, len);
             return ret;
         }
         default:
@@ -1486,12 +1716,13 @@ AST_T *ast_visit_add(AST_T *node)
             sprintf(str, "%s%s", arr_str, right->str_val);
             free(arr_str);
             int len = strlen(str);
+            ret->arr_size = len;
             ret->str_val = calloc(len + 1, sizeof(char));
             strncpy(ret->str_val, str, len);
             return ret;
         }
         printf(KRED);
-        printf("%d:%d -- Can only concatenate array (not '%s') to array\n",
+        printf("%d:%d -- Can only concatenate LIST (not '%s') to LIST\n",
                left->line,
                left->col,
                ast_enum_names[right->type]);
@@ -1532,12 +1763,24 @@ AST_T *ast_visit_add(AST_T *node)
         }
         }
     }
+    else if (left->type == AST_RANGE && right->type == AST_STR)
+    {
+        AST_T *ret = init_ast(AST_STR, left->line, left->col);
+        char str[MAX_NUM_SPACE + MAX_STR_CHAR];
+        sprintf(str, "<Range Object at <%p>>%s", &left, right->str_val);
+        int len = strlen(str);
+        ret->str_val = calloc(len + 1, sizeof(char));
+        ret->arr_size = len;
+        strncpy(ret->str_val, str, len);
+        return ret;
+    }
     else if (left->type == AST_BOOL && right->type == AST_STR)
     {
         AST_T *ret = init_ast(AST_STR, left->line, left->col);
         char str[MAX_NUM_SPACE + MAX_STR_CHAR];
         sprintf(str, "%s%s", left->is_true ? "True" : "False", right->str_val);
         int len = strlen(str);
+        ret->arr_size = len;
         ret->str_val = calloc(len + 1, sizeof(char));
         strncpy(ret->str_val, str, len);
         return ret;
@@ -2313,7 +2556,7 @@ AST_T *ast_visit_while_loop(AST_T *node)
     AST_T *pred = ast_visit(node->while_predicate);
     if (pred->is_true > 0)
     {
-        AST_T *ret = ast_visit(node->while_body);
+        AST_T *ret = ast_visit(node->loop_body);
         if (ret->type == AST_BREAK_STMNT)
             return init_ast(AST_NOOP, node->line, node->col);
         else if (ret->type == AST_RET_STMNT)
@@ -2321,6 +2564,80 @@ AST_T *ast_visit_while_loop(AST_T *node)
         else
             return ast_visit(node);
     }
+    return init_ast(AST_NOOP, node->line, node->col);
+}
+
+AST_T *ast_visit_foreach_loop(AST_T *node)
+{
+    AST_T *ast_for_array = node->for_each_arr;
+    if (ast_for_array == ((void *)0))
+    {
+        ast_for_array = ast_visit(node->for_each_arr_expr);
+        if (ast_for_array->type != AST_ARR && ast_for_array->type != AST_RANGE)
+        {
+            printf(KRED);
+            printf("%d:%d -- Cannot iterate over none iterable type %s\n",
+                   node->line,
+                   node->col,
+                   ast_enum_names[ast_for_array->type]);
+            printf(KNRM);
+            exit(1);
+        }
+        node->for_each_arr = ast_for_array;
+    }
+    if (node->for_each_arr->type == AST_RANGE)
+    {
+        if (node->for_each_index < ast_for_array->range_size)
+        {
+            AST_T *int_val = init_ast(AST_INT, node->line, node->col);
+            int_val->int_val = ast_for_array->range_start + (node->for_each_index++ * ast_for_array->range_step);
+            int_val->scope = node->scope;
+            int_val->global_scope = node->global_scope;
+            int_val->parent = node->parent;
+            node->for_each_var->var_def_expr = int_val;
+            ast_visit(node->for_each_var);
+            AST_T *ret = ast_visit(node->loop_body);
+            if (ret->type == AST_BREAK_STMNT)
+            {
+                node->for_each_index = 0;
+                node->for_each_arr = ((void *)0);
+                return init_ast(AST_NOOP, node->line, node->col);
+            }
+            else if (ret->type == AST_RET_STMNT)
+            {
+                node->for_each_index = 0;
+                node->for_each_arr = ((void *)0);
+                return ret;
+            }
+            else
+                return ast_visit(node);
+        }
+    }
+    else
+    {
+        if (node->for_each_index < ast_for_array->arr_size)
+        {
+            node->for_each_var->var_def_expr = ast_for_array->arr[node->for_each_index++];
+            ast_visit(node->for_each_var);
+            AST_T *ret = ast_visit(node->loop_body);
+            if (ret->type == AST_BREAK_STMNT)
+            {
+                node->for_each_index = 0;
+                node->for_each_arr = ((void *)0);
+                return init_ast(AST_NOOP, node->line, node->col);
+            }
+            else if (ret->type == AST_RET_STMNT)
+            {
+                node->for_each_index = 0;
+                node->for_each_arr = ((void *)0);
+                return ret;
+            }
+            else
+                return ast_visit(node);
+        }
+    }
+    node->for_each_index = 0;
+    node->for_each_arr = ((void *)0);
     return init_ast(AST_NOOP, node->line, node->col);
 }
 
@@ -2614,6 +2931,27 @@ AST_T *ast_visit_type_cast(AST_T *node)
             break;
         }
     }
+    case AST_RANGE:
+    {
+        if (node->cast_type == TO_ARR)
+        {
+            ret = init_ast(AST_ARR, node->line, node->col);
+            ret->arr_size = node->var_def_val->range_size;
+            ret->arr = calloc(ret->arr_size, sizeof(struct AST_STRUCT *));
+            int val = node->var_def_val->range_start;
+            for (int i = 0; i < ret->arr_size; i++)
+            {
+                ret->arr[i] = init_ast(AST_INT, node->line, node->col);
+                ret->arr[i]->int_val = val;
+                val += node->var_def_val->range_step;
+                ret->arr[i]->scope = node->scope;
+                ret->arr[i]->global_scope = node->global_scope;
+                ret->arr[i]->parent = node->parent;
+            }
+            return ret;
+        }
+        break;
+    }
     default:
         break;
     }
@@ -2627,17 +2965,28 @@ AST_T *ast_visit_break_statement(AST_T *node)
     return node;
 }
 
+AST_T *ast_visit_continue(AST_T *node)
+{
+    return node;
+}
+
 AST_T *ast_visit_compound(AST_T *node)
 {
     AST_T *ret;
     for (int i = 0; i < node->compound_size; i++)
     {
+        // is the AST I'm currently looking at a return statement?
         if (node->compound_val[i]->type == AST_RET_STMNT)
         {
             ret = __visit_ret_stmnt__(node, node->compound_val[i]);
             if (ret)
                 return ret;
-
+            continue;
+        }
+        if (node->compound_val[i]->type == AST_CONTINUE)
+        {
+            if (__visit_continue_stmnt__(node, node->compound_val[i]))
+                return node->compound_val[i];
             continue;
         }
         if (node->compound_val[i]->type == AST_BREAK_STMNT)
@@ -2659,6 +3008,12 @@ AST_T *ast_visit_compound(AST_T *node)
         {
             if (__visit_break_stmnt__(node, visit))
                 return visit;
+            continue;
+        }
+        if (visit->type == AST_CONTINUE)
+        {
+            if (__visit_continue_stmnt__(node, visit))
+                return visit;
         }
     }
     return init_ast(AST_NOOP, node->line, node->col);
@@ -2671,7 +3026,20 @@ AST_T *__visit_break_stmnt__(AST_T *node, AST_T *to_visit)
     else
     {
         printf(KYEL);
-        printf("%d:%d -- WARNING: 'break' outside of while loop.\n", to_visit->line, to_visit->col);
+        printf("%d:%d -- WARNING: 'break' outside of loop.\n", to_visit->line, to_visit->col);
+        printf(KNRM);
+        return NULL;
+    }
+}
+
+AST_T *__visit_continue_stmnt__(AST_T *node, AST_T *to_visit)
+{
+    if (node->parent != NULL)
+        return ast_visit(to_visit);
+    else
+    {
+        printf(KYEL);
+        printf("%d:%d -- WARNING: 'continue' outside of loop.\n", to_visit->line, to_visit->col);
         printf(KNRM);
         return NULL;
     }
@@ -2681,6 +3049,7 @@ AST_T *__visit_ret_stmnt__(AST_T *node, AST_T *to_visit)
 {
     if (node->parent != NULL)
     {
+        // Is the return nested?
         if (node->parent->type != AST_FUNC_DEF)
         {
             AST_T *ret = init_ast(AST_RET_STMNT, to_visit->line, to_visit->col);
@@ -2690,13 +3059,14 @@ AST_T *__visit_ret_stmnt__(AST_T *node, AST_T *to_visit)
             ret->parent = node;
             return ret;
         }
+        // Return is not nested. Visit its return expression;
         else
             return ast_visit(to_visit);
     }
     else
     {
         printf(KYEL);
-        printf("%d:%d -- WARNING: 'ret' outside function.\n", to_visit->line, to_visit->col);
+        printf("%d:%d -- WARNING: 'return' outside function.\n", to_visit->line, to_visit->col);
         printf(KNRM);
         return NULL;
     }
@@ -2740,7 +3110,6 @@ AST_T *init_ast(int type, unsigned int line, unsigned int col)
 
     // AST WHILE
     ast->while_predicate = (void *)0;
-    ast->while_body = (void *)0;
 
     // AST BOOL
     ast->is_true = 0;
@@ -2778,5 +3147,19 @@ AST_T *init_ast(int type, unsigned int line, unsigned int col)
     ast->compound_size = 0;
     ast->parent = (void *)0;
 
+    // AST RANGE
+    ast->range_start = 0;
+    ast->range_end = 0;
+    ast->range_step = 1;
+    ast->range_size = 0;
+
+    // AST FOR EACH
+    ast->for_each_var = (void *)0;
+    ast->for_each_arr = (void *)0;
+    ast->for_each_arr_expr = (void *)0;
+    ast->for_each_index = 0;
+
+    // loops
+    ast->loop_body = (void *)0;
     return ast;
 }
