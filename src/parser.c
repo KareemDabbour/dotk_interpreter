@@ -90,7 +90,8 @@ void parser_eat(parser_T *parser, int token_type)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Unexpected Token: '%s' with type '%s'\n",
+        printf("%s:%d:%d -- Unexpected Token: '%s' with type '%s'\n",
+               parser->lexer->file_path,
                parser->current_token->line,
                parser->current_token->col,
                parser->current_token->value,
@@ -203,7 +204,8 @@ AST_T *parser_parse_expr(parser_T *parser, scope_T *scope, AST_T *parent)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- Unexpected token: %s \nExpected %s, %s, %s or %s\n",
+            printf("%s:%d:%d -- Unexpected token: %s \nExpected %s, %s, %s or %s\n",
+                   parser->lexer->file_path,
                    parser->current_token->line,
                    parser->current_token->col,
                    token_names[parser->current_token->type],
@@ -298,7 +300,8 @@ AST_T *parser_parse_term(parser_T *parser, scope_T *scope, AST_T *parent)
 
         default:
             printf(KRED);
-            printf("%d:%d -- Unexpected token: '%s' with type '%d'\n",
+            printf("%s:%d:%d -- Unexpected token: '%s' with type '%d'\n",
+                   parser->lexer->file_path,
                    parser->current_token->line,
                    parser->current_token->col,
                    parser->current_token->value,

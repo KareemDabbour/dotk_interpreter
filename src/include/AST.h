@@ -1,7 +1,7 @@
 #ifndef AST_H
-#include <stdlib.h>
-#include <math.h>
 #include <errno.h>
+#include <math.h>
+#include <stdlib.h>
 #define AST_H
 #define MAX_STR_CHAR 2000
 #define MAX_NUM_SPACE 20
@@ -164,5 +164,7 @@ typedef struct AST_STRUCT
 AST_T *init_ast(int type, unsigned int line, unsigned int col);
 
 AST_T *ast_visit(AST_T *node);
+
+void ast_set_file_path(char *fp);
 
 #endif

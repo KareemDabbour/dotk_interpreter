@@ -47,6 +47,8 @@ static AST_T *ast_visit_lte_comp(AST_T *node);
 static AST_T *ast_visit_gte_comp(AST_T *node);
 static AST_T *ast_visit_type_cast(AST_T *node);
 
+char *file_path;
+
 const char *cast_type_enum_names[6] = {
     "NONE",
     "FLOAT",
@@ -610,7 +612,8 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                                 }
                                 default:
                                     printf(KRED);
-                                    printf("%d:%d -- Cannot compare objects of type '%s'\n",
+                                    printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
+                                           file_path,
                                            x->line,
                                            x->col,
                                            ast_enum_names[x->type]);
@@ -630,7 +633,8 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                             else
                             {
                                 printf(KRED);
-                                printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+                                printf("%s:%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+                                       file_path,
                                        x_arr_elem->line,
                                        x_arr_elem->col,
                                        ast_enum_names[x_arr_elem->type],
@@ -645,7 +649,8 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
                 }
                 default:
                     printf(KRED);
-                    printf("%d:%d -- Cannot compare objects of type '%s'\n",
+                    printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
+                           file_path,
                            x_elem->line,
                            x_elem->col,
                            ast_enum_names[x_elem->type]);
@@ -666,7 +671,8 @@ int __compare_arr__(AST_T *x, AST_T *y, int operator)
             else
             {
                 printf(KRED);
-                printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+                printf("%s:%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+                       file_path,
                        x_elem->line,
                        x_elem->col,
                        ast_enum_names[x_elem->type],
@@ -686,7 +692,8 @@ AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size)
     if (args_size == 0 || args_size > 1)
     {
         printf(KRED);
-        printf("%d:%d -- 'len()' takes exactly one argument (%ld given)\n",
+        printf("%s:%d:%d -- 'len()' takes exactly one argument (%ld given)\n",
+               file_path,
                node->line,
                node->col,
                args_size);
@@ -710,7 +717,7 @@ AST_T *builtin_function_len(AST_T *node, AST_T **args, size_t args_size)
         break;
     default:
         printf(KRED);
-        printf("%d:%d -- Cannot get length of type '%s'.", node->line, node->col, ast_enum_names[visited_ast->type]);
+        printf("%s:%d:%d -- Cannot get length of type '%s'.", file_path, node->line, node->col, ast_enum_names[visited_ast->type]);
         printf(KNRM);
         exit(1);
     }
@@ -722,7 +729,7 @@ AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size)
     if (args_size == 0)
     {
         printf(KYEL);
-        printf("%d:%d -- WARNING: Calling 'print()' with no args\n", node->line, node->col);
+        printf("%s:%d:%d -- WARNING: Calling 'print()' with no args\n", file_path, node->line, node->col);
         printf(KNRM);
     }
     for (size_t i = 0; i < args_size; i++)
@@ -732,7 +739,7 @@ AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size)
         switch (visited_ast->type)
         {
         case AST_STR:
-            printf("\"%s\"\n", visited_ast->str_val);
+            printf("%s\n", visited_ast->str_val);
             break;
         case AST_INT:
             printf("%ld\n", visited_ast->int_val);
@@ -773,7 +780,8 @@ AST_T *builtin_function_not(AST_T *node, AST_T **args, size_t args_size)
     if (args_size == 0 || args_size > 1)
     {
         printf(KRED);
-        printf("%d:%d -- 'not()' takes exactly one argument (%ld given)\n",
+        printf("%s:%d:%d -- 'not()' takes exactly one argument (%ld given)\n",
+               file_path,
                node->line,
                node->col,
                args_size);
@@ -793,7 +801,8 @@ AST_T *builtin_function_abs(AST_T *node, AST_T **args, size_t args_size)
     if (args_size == 0 || args_size > 1)
     {
         printf(KRED);
-        printf("%d:%d -- 'abs()' takes exactly one argument (%ld given)\n",
+        printf("%s:%d:%d -- 'abs()' takes exactly one argument (%ld given)\n",
+               file_path,
                node->line,
                node->col,
                args_size);
@@ -816,7 +825,8 @@ AST_T *builtin_function_abs(AST_T *node, AST_T **args, size_t args_size)
         break;
     default:
         printf(KRED);
-        printf("%d:%d -- Cannot call 'abs()' with type %s can only be called on type INT or type FLOAT.\n",
+        printf("%s:%d:%d -- Cannot call 'abs()' with type %s can only be called on type INT or type FLOAT.\n",
+               file_path,
                node->line,
                node->col,
                ast_enum_names[visted_ast->type]);
@@ -831,7 +841,8 @@ AST_T *builtin_function_range(AST_T *node, AST_T **args, size_t args_size)
     if (args_size == 0 || args_size > 3)
     {
         printf(KRED);
-        printf("%d:%d -- 'range(end)', 'range(start, end)' or 'range(start, end, step)' takes one, two or three arguments (%ld given)\n",
+        printf("%s:%d:%d -- 'range(end)', 'range(start, end)' or 'range(start, end, step)' takes one, two or three arguments (%ld given)\n",
+               file_path,
                node->line,
                node->col,
                args_size);
@@ -869,7 +880,8 @@ AST_T *builtin_function_range(AST_T *node, AST_T **args, size_t args_size)
     if (start_ast != (void *)0 && (start_ast->type != AST_INT))
     {
         printf(KRED);
-        printf("%d:%d -- Cannot call 'range()' with start argument of type %s. Must be of type INT\n",
+        printf("%s:%d:%d -- Cannot call 'range()' with start argument of type %s. Must be of type INT\n",
+               file_path,
                node->line,
                node->col,
                ast_enum_names[start_ast->type]);
@@ -879,7 +891,8 @@ AST_T *builtin_function_range(AST_T *node, AST_T **args, size_t args_size)
     if ((end_ast->type != AST_INT))
     {
         printf(KRED);
-        printf("%d:%d -- Cannot call 'range()' with end argument of type %s. Must be of type INT\n",
+        printf("%s:%d:%d -- Cannot call 'range()' with end argument of type %s. Must be of type INT\n",
+               file_path,
                node->line,
                node->col,
                ast_enum_names[end_ast->type]);
@@ -889,7 +902,8 @@ AST_T *builtin_function_range(AST_T *node, AST_T **args, size_t args_size)
     if (step_ast != (void *)0 && (step_ast->type != AST_INT))
     {
         printf(KRED);
-        printf("%d:%d -- Cannot call 'range()' with step argument of type %s. Must be of type INT\n",
+        printf("%s:%d:%d -- Cannot call 'range()' with step argument of type %s. Must be of type INT\n",
+               file_path,
                node->line,
                node->col,
                ast_enum_names[step_ast->type]);
@@ -907,6 +921,11 @@ AST_T *builtin_function_range(AST_T *node, AST_T **args, size_t args_size)
     ret->range_step = step;
     ret->range_size = ceil((abs(start - end) + abs(step) - 1) / abs(step));
     return ret;
+}
+
+void ast_set_file_path(char *fp)
+{
+    file_path = fp;
 }
 
 AST_T *ast_visit(AST_T *node)
@@ -996,7 +1015,7 @@ AST_T *ast_visit(AST_T *node)
         return node;
     default:
         printf(KRED);
-        printf("%d:%d -- Uncaught statement of type: '%s'\n", node->line, node->col, ast_enum_names[node->type]);
+        printf("%s:%d:%d -- Uncaught statement of type: '%s'\n", file_path, node->line, node->col, ast_enum_names[node->type]);
         exit(1);
     }
 }
@@ -1072,7 +1091,8 @@ AST_T *ast_visit_func_call(AST_T *node)
     if (func_def->type == AST_NOOP)
     {
         printf(KRED);
-        printf("%d:%d -- '%s' is not defined.\n",
+        printf("%s:%d:%d -- '%s' is not defined.\n",
+               file_path,
                node->line,
                node->col,
                node->func_call_name);
@@ -1081,7 +1101,8 @@ AST_T *ast_visit_func_call(AST_T *node)
     if (func_def->func_def_args_size != node->func_call_args_size)
     {
         printf(KRED);
-        printf("%d:%d -- '%s' expected %ld args but recieved %ld.\n",
+        printf("%s:%d:%d -- '%s' expected %ld args but recieved %ld.\n",
+               file_path,
                node->line,
                node->col,
                node->func_call_name,
@@ -1189,7 +1210,8 @@ AST_T *ast_visit_arr_def(AST_T *node)
     if (size->type != AST_INT)
     {
         printf(KRED);
-        printf("%d:%d -- Can't create an array with size of type '%s' must be 'INT' \n",
+        printf("%s:%d:%d -- Can't create an array with size of type '%s' must be 'INT' \n",
+               file_path,
                node->line,
                node->col,
                ast_enum_names[size->type]);
@@ -1198,7 +1220,8 @@ AST_T *ast_visit_arr_def(AST_T *node)
     if (size->int_val < 0)
     {
         printf(KRED);
-        printf("%d:%d -- Can't create an array with size below 0\n",
+        printf("%s:%d:%d -- Can't create an array with size below 0\n",
+               file_path,
                node->line,
                node->col);
         exit(1);
@@ -1246,8 +1269,8 @@ AST_T *ast_visit_arr_index(AST_T *node)
         if (aux->type == AST_NOOP)
         {
             printf(KRED);
-            printf("%d:%d -- Undefined variable '%s'\n",
-                   node->line,
+            printf("%s:%d:%d -- Undefined variable '%s'\n",
+                   file_path, node->line,
                    node->col,
                    node->var_def_var_name);
             exit(1);
@@ -1267,8 +1290,8 @@ AST_T *ast_visit_arr_index(AST_T *node)
     if (arr->type != AST_ARR && arr->type != AST_STR)
     {
         printf(KRED);
-        printf("%d:%d -- '%s' type var '%s' is not subscriptable\n",
-               node->line,
+        printf("%s:%d:%d -- '%s' type var '%s' is not subscriptable\n",
+               file_path, node->line,
                node->col,
                ast_enum_names[arr->type],
                node->var_def_var_name);
@@ -1279,8 +1302,8 @@ AST_T *ast_visit_arr_index(AST_T *node)
     if (ast_index->type != AST_INT)
     {
         printf(KRED);
-        printf("%d:%d -- Can't index an array with type '%s' must be 'INT' \n",
-               node->line,
+        printf("%s:%d:%d -- Can't index an array with type '%s' must be 'INT' \n",
+               file_path, node->line,
                node->col,
                ast_enum_names[ast_index->type]);
         exit(1);
@@ -1293,8 +1316,8 @@ AST_T *ast_visit_arr_index(AST_T *node)
     if (index < 0 || index >= arr->arr_size)
     {
         printf(KRED);
-        printf("%d:%d -- Index Out of Bounds Error. Var '%s' has size %ld but %ld was passed in\n",
-               node->line,
+        printf("%s:%d:%d -- Index Out of Bounds Error. Var '%s' has size %ld but %ld was passed in\n",
+               file_path, node->line,
                node->col,
                node->var_def_var_name,
                arr->arr_size,
@@ -1312,8 +1335,8 @@ AST_T *ast_visit_arr_index(AST_T *node)
             if (ret->type != AST_ARR)
             {
                 printf(KRED);
-                printf("%d:%d -- '%s' type is not subscriptable\n",
-                       node->line,
+                printf("%s:%d:%d -- '%s' type is not subscriptable\n",
+                       file_path, node->line,
                        node->col,
                        ast_enum_names[ret->type]);
                 exit(1);
@@ -1350,8 +1373,8 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
         if (aux->type == AST_NOOP)
         {
             printf(KRED);
-            printf("%d:%d -- Undefined variable '%s'\n",
-                   node->line,
+            printf("%s:%d:%d -- Undefined variable '%s'\n",
+                   file_path, node->line,
                    node->col,
                    node->var_def_var_name);
             exit(1);
@@ -1368,8 +1391,8 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
     if (arr->type != AST_ARR)
     {
         printf(KRED);
-        printf("%d:%d -- '%s' type var '%s' does not support item assignment \n",
-               node->line,
+        printf("%s:%d:%d -- '%s' type var '%s' does not support item assignment \n",
+               file_path, node->line,
                node->col,
                ast_enum_names[arr->type],
                node->var_def_var_name);
@@ -1379,8 +1402,8 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
     if (ast_index->type != AST_INT)
     {
         printf(KRED);
-        printf("%d:%d -- Can't index an array with type '%s' must be 'INT' \n",
-               node->line,
+        printf("%s:%d:%d -- Can't index an array with type '%s' must be 'INT' \n",
+               file_path, node->line,
                node->col,
                ast_enum_names[ast_index->type]);
         exit(1);
@@ -1393,8 +1416,8 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
     if (index < 0 || index >= arr->arr_size)
     {
         printf(KRED);
-        printf("%d:%d -- Index Out of Bounds Error '%s' has size %ld but %ld was passed in\n",
-               node->line,
+        printf("%s:%d:%d -- Index Out of Bounds Error '%s' has size %ld but %ld was passed in\n",
+               file_path, node->line,
                node->col,
                node->var_def_var_name,
                arr->arr_size,
@@ -1408,8 +1431,8 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
         if (inner_arr->type != AST_ARR)
         {
             printf(KRED);
-            printf("%d:%d -- '%s' type is not subscriptable\n",
-                   node->line,
+            printf("%s:%d:%d -- '%s' type is not subscriptable\n",
+                   file_path, node->line,
                    node->col,
                    ast_enum_names[inner_arr->type]);
             exit(1);
@@ -1439,8 +1462,8 @@ AST_T *ast_visit_var_redef(AST_T *node)
     if (vardef->type == AST_NOOP)
     {
         printf(KRED);
-        printf("%d:%d -- Undefined variable '%s'\n",
-               node->line,
+        printf("%s:%d:%d -- Undefined variable '%s'\n",
+               file_path, node->line,
                node->col,
                node->var_name);
         exit(1);
@@ -1465,8 +1488,8 @@ AST_T *ast_visit_var(AST_T *node)
     if (vardef->type == AST_NOOP)
     {
         printf(KRED);
-        printf("%d:%d -- Undefined variable '%s'\n",
-               node->line,
+        printf("%s:%d:%d -- Undefined variable '%s'\n",
+               file_path, node->line,
                node->col,
                node->var_name);
         exit(1);
@@ -1565,8 +1588,8 @@ AST_T *ast_visit_add(AST_T *node)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- Cannot add objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot add objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -1597,8 +1620,8 @@ AST_T *ast_visit_add(AST_T *node)
         case AST_ARR:
         {
             printf(KRED);
-            printf("%d:%d -- Can only concatenate LIST (not 'FLOAT') to LIST\n",
-                   left->line,
+            printf("%s:%d:%d -- Can only concatenate LIST (not 'FLOAT') to LIST\n",
+                   file_path, left->line,
                    left->col);
             exit(1);
         }
@@ -1630,8 +1653,8 @@ AST_T *ast_visit_add(AST_T *node)
         case AST_ARR:
         {
             printf(KRED);
-            printf("%d:%d -- Can only concatenate LIST (not 'INT') to LIST\n",
-                   left->line,
+            printf("%s:%d:%d -- Can only concatenate LIST (not 'INT') to LIST\n",
+                   file_path, left->line,
                    left->col);
             exit(1);
         }
@@ -1722,8 +1745,8 @@ AST_T *ast_visit_add(AST_T *node)
             return ret;
         }
         printf(KRED);
-        printf("%d:%d -- Can only concatenate LIST (not '%s') to LIST\n",
-               left->line,
+        printf("%s:%d:%d -- Can only concatenate LIST (not '%s') to LIST\n",
+               file_path, left->line,
                left->col,
                ast_enum_names[right->type]);
         exit(1);
@@ -1755,8 +1778,8 @@ AST_T *ast_visit_add(AST_T *node)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- bad operand type for unary operator '+': '%s'\n",
-                   right->line,
+            printf("%s:%d:%d -- bad operand type for unary operator '+': '%s'\n",
+                   file_path, right->line,
                    right->col,
                    ast_enum_names[right->type]);
             exit(1);
@@ -1786,8 +1809,8 @@ AST_T *ast_visit_add(AST_T *node)
         return ret;
     }
     printf(KRED);
-    printf("%d:%d -- Cannot add objects of type '%s' and '%s'\n",
-           left->line,
+    printf("%s:%d:%d -- Cannot add objects of type '%s' and '%s'\n",
+           file_path, left->line,
            left->col,
            ast_enum_names[left->type],
            ast_enum_names[right->type]);
@@ -1817,8 +1840,8 @@ AST_T *ast_visit_sub(AST_T *node)
 
         default:
             printf(KRED);
-            printf("%d:%d -- Cannot subtract objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot subtract objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -1856,8 +1879,8 @@ AST_T *ast_visit_sub(AST_T *node)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- bad operand type for unary operator '-': '%s'\n",
-                   right->line,
+            printf("%s:%d:%d -- bad operand type for unary operator '-': '%s'\n",
+                   file_path, right->line,
                    right->col,
                    ast_enum_names[right->type]);
             exit(1);
@@ -1867,8 +1890,8 @@ AST_T *ast_visit_sub(AST_T *node)
     else if (right->type == AST_NOOP)
     {
         printf(KRED);
-        printf("%d:%d -- bad operand type for unary operator '-': '%s'\n",
-               right->line,
+        printf("%s:%d:%d -- bad operand type for unary operator '-': '%s'\n",
+               file_path, right->line,
                right->col,
                ast_enum_names[right->type]);
         exit(1);
@@ -1876,8 +1899,8 @@ AST_T *ast_visit_sub(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot subtract objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot subtract objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col,
                ast_enum_names[left->type],
                ast_enum_names[right->type]);
@@ -1902,8 +1925,8 @@ AST_T *ast_visit_mod(AST_T *node)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- Cannot perfom modulo on objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot perfom modulo on objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -1913,8 +1936,8 @@ AST_T *ast_visit_mod(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot perfom modulo on objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot perfom modulo on objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col,
                ast_enum_names[left->type],
                ast_enum_names[right->type]);
@@ -1945,8 +1968,8 @@ AST_T *ast_visit_mul(AST_T *node)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- Cannot multiply objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot multiply objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -1968,8 +1991,8 @@ AST_T *ast_visit_mul(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot multiply objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot multiply objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col,
                ast_enum_names[left->type],
                ast_enum_names[right->type]);
@@ -1991,7 +2014,7 @@ AST_T *ast_visit_div(AST_T *node)
             if (right->int_val == 0)
             {
                 printf(KRED);
-                printf("%d:%d -- Zero Division Error: Cannot Divide by 0.\n", right->line, right->col);
+                printf("%s:%d:%d -- Zero Division Error: Cannot Divide by 0.\n", file_path, right->line, right->col);
                 exit(1);
             }
             ret->float_val = (float)left->int_val / (float)right->int_val;
@@ -2003,7 +2026,7 @@ AST_T *ast_visit_div(AST_T *node)
             if (right->float_val == 0)
             {
                 printf(KRED);
-                printf("%d:%d -- Zero Division Error: Cannot Divide by 0.\n", right->line, right->col);
+                printf("%s:%d:%d -- Zero Division Error: Cannot Divide by 0.\n", file_path, right->line, right->col);
                 exit(1);
             }
             ret->float_val = left->float_val / right->float_val;
@@ -2012,8 +2035,8 @@ AST_T *ast_visit_div(AST_T *node)
 
         default:
             printf(KRED);
-            printf("%d:%d -- Cannot compare objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -2025,7 +2048,7 @@ AST_T *ast_visit_div(AST_T *node)
         if (right->int_val == 0)
         {
             printf(KRED);
-            printf("%d:%d -- Zero Division Error: Cannot Divide by 0.\n", right->line, right->col);
+            printf("%s:%d:%d -- Zero Division Error: Cannot Divide by 0.\n", file_path, right->line, right->col);
             exit(1);
         }
         ret->float_val = left->float_val / (float)right->int_val;
@@ -2037,7 +2060,7 @@ AST_T *ast_visit_div(AST_T *node)
         if (right->float_val == 0)
         {
             printf(KRED);
-            printf("%d:%d -- Zero Division Error: Cannot Divide by 0.\n", right->line, right->col);
+            printf("%s:%d:%d -- Zero Division Error: Cannot Divide by 0.\n", file_path, right->line, right->col);
             exit(1);
         }
         ret->float_val = (float)left->int_val / right->float_val;
@@ -2046,8 +2069,8 @@ AST_T *ast_visit_div(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col,
                ast_enum_names[left->type],
                ast_enum_names[right->type]);
@@ -2095,8 +2118,8 @@ AST_T *ast_visit_not_eq_comp(AST_T *node)
         }
         default:
             printf(KRED);
-            printf("%d:%d -- Cannot compare objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -2117,8 +2140,8 @@ AST_T *ast_visit_not_eq_comp(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col,
                ast_enum_names[left->type],
                ast_enum_names[right->type]);
@@ -2166,8 +2189,8 @@ AST_T *ast_visit_eq_comp(AST_T *node)
         }
         default:
             printf(KRED);
-            printf("%d:%d -- Cannot compare objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -2188,8 +2211,8 @@ AST_T *ast_visit_eq_comp(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col,
                ast_enum_names[left->type],
                ast_enum_names[right->type]);
@@ -2238,8 +2261,8 @@ AST_T *ast_visit_lt_comp(AST_T *node)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- Cannot compare objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -2261,8 +2284,8 @@ AST_T *ast_visit_lt_comp(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col,
                ast_enum_names[left->type],
                ast_enum_names[right->type]);
@@ -2311,8 +2334,8 @@ AST_T *ast_visit_gt_comp(AST_T *node)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- Cannot compare objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -2334,8 +2357,8 @@ AST_T *ast_visit_gt_comp(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col,
                ast_enum_names[left->type],
                ast_enum_names[right->type]);
@@ -2384,8 +2407,8 @@ AST_T *ast_visit_lte_comp(AST_T *node)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- Cannot compare objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -2407,8 +2430,8 @@ AST_T *ast_visit_lte_comp(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col, ast_enum_names[left->type],
                ast_enum_names[right->type]);
         exit(1);
@@ -2456,8 +2479,8 @@ AST_T *ast_visit_gte_comp(AST_T *node)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- Cannot compare objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -2479,8 +2502,8 @@ AST_T *ast_visit_gte_comp(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot compare objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col, ast_enum_names[left->type],
                ast_enum_names[right->type]);
         exit(1);
@@ -2510,8 +2533,8 @@ AST_T *ast_visit_int_div(AST_T *node)
 
         default:
             printf(KRED);
-            printf("%d:%d -- Cannot divide objects of type '%s'\n",
-                   left->line,
+            printf("%s:%d:%d -- Cannot divide objects of type '%s'\n",
+                   file_path, left->line,
                    left->col,
                    ast_enum_names[left->type]);
             exit(1);
@@ -2532,8 +2555,8 @@ AST_T *ast_visit_int_div(AST_T *node)
     else
     {
         printf(KRED);
-        printf("%d:%d -- Cannot divide objects of type '%s' and '%s'\n",
-               left->line,
+        printf("%s:%d:%d -- Cannot divide objects of type '%s' and '%s'\n",
+               file_path, left->line,
                left->col,
                ast_enum_names[left->type],
                ast_enum_names[right->type]);
@@ -2576,8 +2599,8 @@ AST_T *ast_visit_foreach_loop(AST_T *node)
         if (ast_for_array->type != AST_ARR && ast_for_array->type != AST_RANGE)
         {
             printf(KRED);
-            printf("%d:%d -- Cannot iterate over none iterable type %s\n",
-                   node->line,
+            printf("%s:%d:%d -- Cannot iterate over none iterable type %s\n",
+                   file_path, node->line,
                    node->col,
                    ast_enum_names[ast_for_array->type]);
             printf(KNRM);
@@ -2859,7 +2882,7 @@ AST_T *ast_visit_type_cast(AST_T *node)
             if ((errno != 0) || (to_conv == p) || (*p != 0))
             {
                 printf(KRED);
-                printf("%d:%d -- Invalid literal for int() with base 10: '%s'\n", node->line, node->col, node->var_def_val->str_val);
+                printf("%s:%d:%d -- Invalid literal for int() with base 10: '%s'\n", file_path, node->line, node->col, node->var_def_val->str_val);
                 exit(1);
             }
             ret = init_ast(AST_INT, node->var_def_expr->line, node->var_def_expr->col);
@@ -2877,7 +2900,7 @@ AST_T *ast_visit_type_cast(AST_T *node)
             if ((errno != 0) || (to_conv == p) || (*p != 0))
             {
                 printf(KRED);
-                printf("%d:%d -- Could not convert STR to FLOAT: '%s'\n", node->line, node->col, node->var_def_val->str_val);
+                printf("%s:%d:%d -- Could not convert STR to FLOAT: '%s'\n", file_path, node->line, node->col, node->var_def_val->str_val);
                 exit(1);
             }
             ret = init_ast(AST_FLOAT, node->var_def_expr->line, node->var_def_expr->col);
@@ -2956,7 +2979,7 @@ AST_T *ast_visit_type_cast(AST_T *node)
         break;
     }
     printf(KRED);
-    printf("%d:%d -- Type '%s' cannot be converted to %s\n", node->var_def_expr->line, node->var_def_expr->col, ast_enum_names[node->var_def_val->type], cast_type_enum_names[node->cast_type]);
+    printf("%s:%d:%d -- Type '%s' cannot be converted to %s\n", file_path, node->var_def_expr->line, node->var_def_expr->col, ast_enum_names[node->var_def_val->type], cast_type_enum_names[node->cast_type]);
     exit(1);
 }
 
@@ -3026,7 +3049,7 @@ AST_T *__visit_break_stmnt__(AST_T *node, AST_T *to_visit)
     else
     {
         printf(KYEL);
-        printf("%d:%d -- WARNING: 'break' outside of loop.\n", to_visit->line, to_visit->col);
+        printf("%s:%d:%d -- WARNING: 'break' outside of loop.\n", file_path, to_visit->line, to_visit->col);
         printf(KNRM);
         return NULL;
     }
@@ -3039,7 +3062,7 @@ AST_T *__visit_continue_stmnt__(AST_T *node, AST_T *to_visit)
     else
     {
         printf(KYEL);
-        printf("%d:%d -- WARNING: 'continue' outside of loop.\n", to_visit->line, to_visit->col);
+        printf("%s:%d:%d -- WARNING: 'continue' outside of loop.\n", file_path, to_visit->line, to_visit->col);
         printf(KNRM);
         return NULL;
     }
@@ -3066,7 +3089,7 @@ AST_T *__visit_ret_stmnt__(AST_T *node, AST_T *to_visit)
     else
     {
         printf(KYEL);
-        printf("%d:%d -- WARNING: 'return' outside function.\n", to_visit->line, to_visit->col);
+        printf("%s:%d:%d -- WARNING: 'return' outside function.\n", file_path, to_visit->line, to_visit->col);
         printf(KNRM);
         return NULL;
     }

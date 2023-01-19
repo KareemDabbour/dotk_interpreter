@@ -15,11 +15,12 @@ typedef struct LEXER_STRUCT
     unsigned int line;
     unsigned int col;
     char *contents;
+    char  *file_path;
     int len;
 } lexer_T;
 
 // Initialize the lexer
-lexer_T *init_lexer(char *contents);
+lexer_T *init_lexer(char *contents, char *file_path);
 
 void lexer_advance(lexer_T *lexer);
 

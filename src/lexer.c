@@ -1,11 +1,11 @@
 #include "include/lexer.h"
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 // Initialize the lexer
-lexer_T *init_lexer(char *contents)
+lexer_T *init_lexer(char *contents, char *file_path)
 {
     lexer_T *lexer = calloc(1, sizeof(struct LEXER_STRUCT));
     lexer->contents = contents;
@@ -14,6 +14,7 @@ lexer_T *init_lexer(char *contents)
     lexer->col = 1;
     lexer->c = contents[lexer->index];
     lexer->len = strlen(contents);
+    lexer->file_path = file_path;
     return lexer;
 }
 
@@ -58,7 +59,7 @@ void lexer_skip_block_comments(lexer_T *lexer)
     if (lexer->index == lexer->len)
     {
         printf(KRED);
-        printf("%d:%d -- Unclosed block comment. Use '~' on both sides to open and close a comment\n", start_line, start_col);
+        printf("%s:%d:%d -- Unclosed block comment. Use '~' on both sides to open and close a comment block\n", lexer->file_path, start_line, start_col);
         exit(1);
     }
     lexer_advance(lexer);
@@ -164,7 +165,7 @@ token_T *lexer_get_next_token(lexer_T *lexer)
             else
             {
                 printf(KRED);
-                printf("%d:%d -- Unexpected token: '%c' expected '&'\n", lexer->line, lexer->col, lexer->c);
+                printf("%s:%d:%d -- Unexpected token: '%c' expected '&'\n", lexer->file_path, lexer->line, lexer->col, lexer->c);
                 exit(1);
             }
         }
@@ -178,7 +179,7 @@ token_T *lexer_get_next_token(lexer_T *lexer)
             else
             {
                 printf(KRED);
-                printf("%d:%d -- Unexpected token: '%c' expected '|'\n", lexer->line, lexer->col, lexer->c);
+                printf("%s:%d:%d -- Unexpected token: '%c' expected '|'\n", lexer->file_path, lexer->line, lexer->col, lexer->c);
                 exit(1);
             }
         }
@@ -202,7 +203,7 @@ token_T *lexer_get_next_token(lexer_T *lexer)
             else
             {
                 printf(KRED);
-                printf("%d:%d -- Unexpected token: '%c' expected '=' after the '!'\n", lexer->line, lexer->col, lexer->c);
+                printf("%s:%d:%d -- Unexpected token: '%c' expected '=' after the '!'\n", lexer->file_path, lexer->line, lexer->col, lexer->c);
                 exit(1);
             }
         }
@@ -245,7 +246,7 @@ token_T *lexer_get_next_token(lexer_T *lexer)
         default:
         {
             printf(KRED);
-            printf("%d:%d -- Unexpected token '%c' exiting\n", lexer->line, lexer->col, lexer->c);
+            printf("%s:%d:%d -- Unexpected token '%c' exiting\n", lexer->file_path, lexer->line, lexer->col, lexer->c);
             exit(1);
         }
         }
@@ -279,7 +280,7 @@ token_T *lexer_collect_string(lexer_T *lexer)
         if (lexer->c == '\0')
         {
             printf(KRED);
-            printf("%d:%d -- Unexpected token: End of File. Expected '\"'\n", lexer->line, lexer->col);
+            printf("%s:%d:%d -- Unexpected token: End of File. Expected '\"'\n", lexer->file_path, lexer->line, lexer->col);
             exit(1);
         }
     }
