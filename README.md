@@ -2,7 +2,7 @@
 
 ## Description
 
-`Dot-K` is a basic dynamically typed interpreted language written in C.
+`Dot-K` is a basic, Turing complete, dynamically typed, interpreted language written in C.
 
 _To read more about the implementation, please see the `Implementation` section._
 
@@ -304,7 +304,7 @@ if("a" > "z" && 1 != 1){
 ## Future Features
 
 ### Improving Memory Management by Cleaning up Architecture
-Currently, there is little to no memory management found in the code; this leads to a lot of memory leaks and sub-optimal code. By refactoring the architecture and cleaning up technical debt performance of `Dot-K` will hopefully improve.
+Currently, there is little to no memory management found in the code; this leads to a lot of memory leaks and sub-optimal code. By refactoring the architecture and cleaning up technical debt performance of `Dot-K` will hopefully improve. This is something that might take some time since it'll require a lot of re-design. 
 
 ### Creating a shell
 A `Dot-K` shell would allow for on-the-fly execution of `Dot-K` code - much like `python`.
