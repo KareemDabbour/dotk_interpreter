@@ -1088,7 +1088,7 @@ AST_T *ast_visit_func_call(AST_T *node)
     AST_T *func_def = scope_get_func_def(
         node->global_scope,
         node->func_call_name);
-    if (func_def->type == AST_NOOP)
+    if (func_def == NULL)
     {
         printf(KRED);
         printf("%s:%d:%d -- '%s' is not defined.\n",
@@ -1261,12 +1261,12 @@ AST_T *ast_visit_arr_index(AST_T *node)
     {
         AST_T *aux = scope_get_var_def(node->scope, node->var_def_var_name);
         AST_T *temp = node;
-        while (aux->type == AST_NOOP && temp->parent != (void *)0)
+        while (aux == NULL && temp->parent != (void *)0)
         {
             aux = scope_get_var_def(temp->scope, node->var_def_var_name);
             temp = temp->parent;
         }
-        if (aux->type == AST_NOOP)
+        if (aux == NULL)
         {
             printf(KRED);
             printf("%s:%d:%d -- Undefined variable '%s'\n",
@@ -1316,10 +1316,9 @@ AST_T *ast_visit_arr_index(AST_T *node)
     if (index < 0 || index >= arr->arr_size)
     {
         printf(KRED);
-        printf("%s:%d:%d -- Index Out of Bounds Error. Var '%s' has size %ld but %ld was passed in\n",
+        printf("%s:%d:%d -- Index Out of Bounds Error. Array has size %ld but %ld was passed in\n",
                file_path, node->line,
                node->col,
-               node->var_def_var_name,
                arr->arr_size,
                ast_index->int_val);
         exit(1);
@@ -1327,15 +1326,13 @@ AST_T *ast_visit_arr_index(AST_T *node)
     AST_T *ret;
     if (arr->type == AST_ARR)
     {
-        for (int i = 0; i < arr->arr_size; i++)
-            arr->arr[i]->scope = node->scope;
-        ret = ast_visit(arr->arr[index]);
+        ret = arr->arr[index];
         if (node->arr_inner_index != NULL)
         {
             if (ret->type != AST_ARR)
             {
                 printf(KRED);
-                printf("%s:%d:%d -- '%s' type is not subscriptable\n",
+                printf("%s:%d:%d -- Type '%s' is not subscriptable\n",
                        file_path, node->line,
                        node->col,
                        ast_enum_names[ret->type]);
@@ -1343,6 +1340,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
             }
             node->arr_inner_index->arr = ret->arr;
             node->arr_inner_index->arr_size = ret->arr_size;
+            node->arr_inner_index->scope = node->scope;
             return ast_visit(node->arr_inner_index);
         }
     }
@@ -1365,12 +1363,12 @@ AST_T *ast_visit_arr_index_assignment(AST_T *node)
     {
         AST_T *aux = scope_get_var_def(node->scope, node->var_def_var_name);
         AST_T *temp = node;
-        while (aux->type == AST_NOOP && temp->parent != (void *)0)
+        while (aux == NULL && temp->parent != (void *)0)
         {
             aux = scope_get_var_def(temp->scope, node->var_def_var_name);
             temp = temp->parent;
         }
-        if (aux->type == AST_NOOP)
+        if (aux == NULL)
         {
             printf(KRED);
             printf("%s:%d:%d -- Undefined variable '%s'\n",
@@ -1454,12 +1452,12 @@ AST_T *ast_visit_var_redef(AST_T *node)
 {
     AST_T *vardef = scope_get_var_def(node->scope, node->var_def_var_name);
     AST_T *temp = node;
-    while (vardef->type == AST_NOOP && temp->parent != (void *)0)
+    while (vardef == NULL && temp->parent != (void *)0)
     {
         vardef = scope_get_var_def(temp->scope, node->var_def_var_name);
         temp = temp->parent;
     }
-    if (vardef->type == AST_NOOP)
+    if (vardef == NULL)
     {
         printf(KRED);
         printf("%s:%d:%d -- Undefined variable '%s'\n",
@@ -1480,12 +1478,12 @@ AST_T *ast_visit_var(AST_T *node)
 
     AST_T *vardef = scope_get_var_def(node->scope, node->var_name);
     AST_T *temp = node;
-    while (vardef->type == AST_NOOP && temp->parent != (void *)0)
+    while (vardef == NULL && temp->parent != (void *)0)
     {
         vardef = scope_get_var_def(temp->scope, node->var_name);
         temp = temp->parent;
     }
-    if (vardef->type == AST_NOOP)
+    if (vardef == NULL)
     {
         printf(KRED);
         printf("%s:%d:%d -- Undefined variable '%s'\n",

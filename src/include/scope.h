@@ -1,16 +1,15 @@
 #ifndef SCOPE_H
 #define SCOPE_H
 #include "AST.h"
-#include <string.h>
+#include "HashMap.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 typedef struct SCOPE_STRUCT
 {
-    AST_T **function_definitions;
-    size_t function_definitions_size;
-    AST_T **variable_definitions;
-    size_t variable_definitions_size;
+    HashMap_T *function_definitions;
+    HashMap_T *symbol_table;
 } scope_T;
 
 scope_T *init_scope();
@@ -25,6 +24,6 @@ AST_T *scope_replace_var_def(scope_T *scope, AST_T *var_def);
 
 AST_T *scope_get_var_def(scope_T *scope, const char *vname);
 
-int scope_rem_var_def(scope_T *scope, const char *vname);
+void scope_rem_var_def(scope_T *scope, const char *vname);
 
 #endif
