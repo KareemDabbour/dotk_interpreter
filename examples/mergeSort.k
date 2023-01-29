@@ -2,32 +2,42 @@ def mergeSort(arr){
     if(len(arr) <= 1){
         return arr;
     }
-    var mid = len(arr) // 2;    
-    var left = mergeSort(arr[:mid]);
-    var right = mergeSort(arr[mid:]);
-    return merge(left, right);
+    var mid = len(arr) // 2;
+
+    var left = arr[:mid];    
+    var right = arr[mid:];
+    mergeSort(left);
+    mergeSort(right);
+    merge(arr, left, right);
 }
 
-def merge(l, r) {
-    var result = [0];
-    var i = 0;
-    var j = 0;
-    var index = 0;
-    while((i < len(l)) && (j < len(r))){
-        if(l[i] < r[j]){
-            result = result + {l[i]};
+def merge(arr, left, right) {
+    var i = var j = var index = 0;
+
+    while((i < len(left)) && (j < len(right))){
+        if(left[i] < right[j]){
+            arr[index] = left[i];
             i = i + 1;
         }else{
-            result = result + {r[j]};
+            arr[index] = right[j];
             j = j + 1;
         }
+        index = index + 1;
     }
-    result = result + l[i:];
-    result = result + r[j:]; 
-    return result;
+    while (i < len(left)){
+        arr[index] = left[i];
+        i = i + 1;
+        index = index + 1;
+    }
+    while (j < len(right)){
+        a[index] = right[j];
+        j = j + 1;
+        index = index + 1;
+    }
 }
 
-var arr = list(range(500, 0, -1));
+var arr = list(range(100000, 0, -1));
 
 print("List before sorting: " + arr);
-print("List after sorting: " + mergeSort(arr));
+mergeSort(arr);
+print("List after sorting: " + arr);

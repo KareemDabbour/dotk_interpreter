@@ -194,8 +194,8 @@ The following code containts examples of how to explicit arrays in `Dot-K`:
 ```
 
 ### Indexing
-Arrays in `Dot-K` can be indexed much like in Python *_without slices_*.
-For example, indexing can be done with negative numbers (`-1 referring to the last element of the array`). 
+Arrays in `Dot-K` can be indexed much like in Python.
+For example, indexing can be done with slices and negative numbers (`-1 referring to the last element of the array`). 
 
 More array examples can be seen in `examples/arrays.k`
 
