@@ -57,7 +57,8 @@ typedef struct AST_STRUCT
         AST_TYPE_CAST,            // 33
         AST_FOR_EACH,             // 34
         AST_CONTINUE,             // 35
-        AST_RANGE                 // 36
+        AST_RANGE,                // 36
+        AST_SLICE                 // 37
     } type;
 
     // AST TYPE CAST
@@ -146,7 +147,7 @@ typedef struct AST_STRUCT
     struct AST_STRUCT *for_each_arr_expr;
     int for_each_index;
 
-    // AST RANGE
+    // AST RANGE/AST SLICE (start/end)
     int range_start;
     int range_end;
     int range_step;

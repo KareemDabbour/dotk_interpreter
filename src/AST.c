@@ -46,6 +46,7 @@ static AST_T *ast_visit_gt_comp(AST_T *node);
 static AST_T *ast_visit_lte_comp(AST_T *node);
 static AST_T *ast_visit_gte_comp(AST_T *node);
 static AST_T *ast_visit_type_cast(AST_T *node);
+static AST_T *ast_visit_slice(AST_T *node);
 
 char *file_path;
 
@@ -58,7 +59,7 @@ const char *cast_type_enum_names[6] = {
     "LIST"};
 
 const char *
-    ast_enum_names[37] = {"NULL",
+    ast_enum_names[38] = {"NULL",
                           "FUNCTION",
                           "FUNCTION DEFINITION",
                           "VARIABLE DEFINITION",
@@ -94,7 +95,8 @@ const char *
                           "TYPE CAST",
                           "FOR EACH LOOP",
                           "CONTINUE",
-                          "RANGE"};
+                          "RANGE",
+                          "SLICE"};
 
 void print_arr(AST_T *arr)
 {
@@ -1011,6 +1013,8 @@ AST_T *ast_visit(AST_T *node)
         return ast_visit_type_cast(node);
     case AST_RANGE:
         return node;
+    case AST_SLICE:
+        return ast_visit_slice(node);
     case AST_NOOP:
         return node;
     default:
@@ -1071,6 +1075,36 @@ int __remove__var_def(AST_T *node)
             return return_or_break;
     }
     return return_or_break;
+}
+
+AST_T *ast_visit_slice(AST_T *node)
+{
+    AST_T *left = ast_visit(node->op_left);
+    AST_T *right = ast_visit(node->op_right);
+    node->op_left->int_val = left->int_val;
+    node->op_right->int_val = right->int_val;
+
+    if (left->type != AST_INT && left->type != AST_NOOP)
+    {
+        printf(KRED);
+        printf("%s:%d:%d -- Slice indices must be of type 'INT' or 'NULL': Type '%s' was used\n",
+               file_path,
+               node->op_left->line,
+               node->op_left->col,
+               ast_enum_names[left->type]);
+        exit(1);
+    }
+    if (right->type != AST_INT && right->type != AST_NOOP)
+    {
+        printf(KRED);
+        printf("%s:%d:%d -- Slice indices must be of type 'INT' or 'NULL': Type '%s' was used\n",
+               file_path,
+               node->op_right->line,
+               node->op_right->col,
+               ast_enum_names[right->type]);
+        exit(1);
+    }
+    return node;
 }
 
 AST_T *ast_visit_func_call(AST_T *node)
@@ -1176,7 +1210,7 @@ AST_T *ast_visit_var_def(AST_T *node)
     ret->var_def_var_name = node->var_def_var_name;
     ret->var_def_val = ast_visit(ret->var_def_expr);
     scope_add_var_def(node->scope, ret);
-    return ret;
+    return ret->var_def_val;
 }
 
 AST_T *ast_visit_arr(AST_T *node)
@@ -1232,13 +1266,15 @@ AST_T *ast_visit_arr_def(AST_T *node)
     {
         if (node->var_def_val == NULL)
         {
+            AST_T *null_ast = init_ast(AST_NOOP, node->line, node->col);
             for (int i = 0; i < ret->arr_size; i++)
-                ret->arr[i] = init_ast(AST_NOOP, node->line, node->col);
+                ret->arr[i] = null_ast;
         }
         else
         {
+            AST_T *default_val = ast_visit(node->var_def_val);
             for (int i = 0; i < ret->arr_size; i++)
-                ret->arr[i] = ast_visit(node->var_def_val);
+                ret->arr[i] = default_val;
         }
     }
     else
@@ -1251,6 +1287,35 @@ AST_T *ast_visit_arr_def(AST_T *node)
     ret->scope = node->scope;
     ret->parent = node->parent;
 
+    return ret;
+}
+
+AST_T *get_arr_slice(AST_T *array, AST_T *slice)
+{
+
+    slice->range_start = slice->op_left->int_val;
+    slice->range_end = slice->op_right->int_val;
+
+    if (slice->range_start < 0)
+        slice->range_start = array->arr_size + slice->range_start;
+    else if (slice->range_start > array->arr_size)
+        slice->range_start = array->arr_size;
+    if (slice->range_end < 0)
+        slice->range_end = array->arr_size + slice->range_end < 0 ? 0 : array->arr_size + slice->range_end;
+
+    if (slice->op_left->type == AST_NOOP || slice->range_start < 0)
+        slice->range_start = 0;
+    if (slice->op_right->type == AST_NOOP || slice->range_end > array->arr_size)
+        slice->range_end = array->arr_size;
+    AST_T *ret = init_ast(AST_ARR, slice->line, slice->col);
+    ret->arr_size = slice->range_end - slice->range_start < 0 ? 0 : slice->range_end - slice->range_start;
+    if (ret->arr_size > 0)
+        ret->arr = calloc(ret->arr_size, sizeof(AST_T *));
+    int index = 0;
+    for (int i = slice->range_start; i < slice->range_end; i++)
+    {
+        ret->arr[index++] = array->arr[i];
+    }
     return ret;
 }
 
@@ -1299,15 +1364,18 @@ AST_T *ast_visit_arr_index(AST_T *node)
     }
 
     AST_T *ast_index = ast_visit(node->arr_index);
-    if (ast_index->type != AST_INT)
+    if (ast_index->type != AST_INT && ast_index->type != AST_SLICE)
     {
         printf(KRED);
-        printf("%s:%d:%d -- Can't index an array with type '%s' must be 'INT' \n",
-               file_path, node->line,
+        printf("%s:%d:%d -- Can't index an array with type '%s' must be 'INT' or 'SLICE'\n",
+               file_path,
+               node->line,
                node->col,
                ast_enum_names[ast_index->type]);
         exit(1);
     }
+    if (ast_index->type == AST_SLICE)
+        return get_arr_slice(arr, ast_index);
     size_t index;
     if (ast_index->int_val < 0)
         index = arr->arr_size + ast_index->int_val;
@@ -1461,9 +1529,10 @@ AST_T *ast_visit_var_redef(AST_T *node)
     {
         printf(KRED);
         printf("%s:%d:%d -- Undefined variable '%s'\n",
-               file_path, node->line,
+               file_path,
+               node->line,
                node->col,
-               node->var_name);
+               node->var_def_var_name);
         exit(1);
     }
 
@@ -1475,7 +1544,6 @@ AST_T *ast_visit_var_redef(AST_T *node)
 
 AST_T *ast_visit_var(AST_T *node)
 {
-
     AST_T *vardef = scope_get_var_def(node->scope, node->var_name);
     AST_T *temp = node;
     while (vardef == NULL && temp->parent != (void *)0)

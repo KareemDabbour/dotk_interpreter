@@ -166,7 +166,8 @@ AST_T *parser_parse_expr(parser_T *parser, scope_T *scope, AST_T *parent)
            (parser->current_token->type == TOKEN_SUB) ||
            (parser->current_token->type == TOKEN_AND) ||
            (parser->current_token->type == TOKEN_OR) ||
-           (parser->current_token->type == TOKEN_MOD))
+           (parser->current_token->type == TOKEN_MOD) ||
+           (parser->current_token->type == TOKEN_COLON))
     {
         AST_T *temp = init_ast(AST_NOOP, parser->current_token->line, parser->current_token->col);
         switch (parser->current_token->type)
@@ -199,6 +200,12 @@ AST_T *parser_parse_expr(parser_T *parser, scope_T *scope, AST_T *parent)
         {
             temp->type = AST_MOD;
             parser_eat(parser, TOKEN_MOD);
+            break;
+        }
+        case TOKEN_COLON:
+        {
+            temp->type = AST_SLICE;
+            parser_eat(parser, TOKEN_COLON);
             break;
         }
         default:

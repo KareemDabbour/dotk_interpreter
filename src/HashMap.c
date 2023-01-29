@@ -27,21 +27,16 @@ void map_put(HashMap_T *map, const char *key, AST_T *value)
 {
     unsigned int index = hash(key);
     HashNode_T *node = map->table[index];
-    while (node != NULL)
-    {
-        if (fast_compare(node->key, key, node->key_len) == 0)
-        {
-            node->value = value;
-            return;
-        }
-        node = node->next;
-    }
-    node = (HashNode_T *)malloc(sizeof(HashNode_T));
-    node->key = strdup(key);
-    node->key_len = strlen(key);
-    node->value = value;
-    node->next = NULL;
-    map->table[index] = node;
+    HashNode_T *temp;
+
+    temp = (HashNode_T *)malloc(sizeof(HashNode_T));
+    temp->key = strdup(key);
+    temp->key_len = strlen(key);
+    temp->value = value;
+    if (node != NULL)
+        temp->next = node;
+    // make it so that it adds it to the front of the list. Should take care of recursion
+    map->table[index] = temp;
 }
 
 AST_T *map_get(HashMap_T *map, const char *key)
@@ -63,7 +58,7 @@ AST_T *map_get(HashMap_T *map, const char *key)
 
 void map_remove(HashMap_T *map, const char *key)
 {
-    if (map != NULL)
+    if (map == NULL)
         return;
     unsigned int index = hash(key);
     HashNode_T *node = map->table[index];
