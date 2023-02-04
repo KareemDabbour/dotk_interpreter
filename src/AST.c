@@ -774,7 +774,7 @@ AST_T *builtin_function_print(AST_T *node, AST_T **args, size_t args_size)
             break;
         }
     }
-    return init_ast(AST_NOOP, node->line, node->col);
+    return &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};
 }
 
 AST_T *builtin_function_not(AST_T *node, AST_T **args, size_t args_size)
@@ -811,7 +811,7 @@ AST_T *builtin_function_abs(AST_T *node, AST_T **args, size_t args_size)
         printf(KNRM);
         exit(1);
     }
-    AST_T *ret = init_ast(AST_NOOP, node->line, node->col);
+    AST_T *ret = &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};
     ret->scope = node->scope;
     ret->global_scope = node->global_scope;
     AST_T *visted_ast = ast_visit(args[0]);
@@ -819,7 +819,7 @@ AST_T *builtin_function_abs(AST_T *node, AST_T **args, size_t args_size)
     {
     case AST_INT:
         ret->type = AST_INT;
-        ret->int_val = abs(visted_ast->int_val);
+        ret->int_val = labs(visted_ast->int_val);
         break;
     case AST_FLOAT:
         ret->type = AST_FLOAT;
@@ -1039,7 +1039,6 @@ int __remove__var_def(AST_T *node)
         {
         case AST_WHILE_LOOP:
         {
-            AST_T *rew = node->compound_val[i];
             AST_T *t = ast_visit(node->compound_val[i]->while_predicate);
             if (t->is_true)
                 if (__remove__var_def(node->compound_val[i]->loop_body))
@@ -1266,7 +1265,7 @@ AST_T *ast_visit_arr_def(AST_T *node)
     {
         if (node->var_def_val == NULL)
         {
-            AST_T *null_ast = init_ast(AST_NOOP, node->line, node->col);
+            AST_T *null_ast = &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};
             for (int i = 0; i < ret->arr_size; i++)
                 ret->arr[i] = null_ast;
         }
@@ -1391,7 +1390,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
                ast_index->int_val);
         exit(1);
     }
-    AST_T *ret;
+    AST_T *ret = &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};;
     if (arr->type == AST_ARR)
     {
         ret = arr->arr[index];
@@ -1412,7 +1411,7 @@ AST_T *ast_visit_arr_index(AST_T *node)
             return ast_visit(node->arr_inner_index);
         }
     }
-    else if (arr->type == AST_STR)
+    else
     {
         ret = init_ast(AST_STR, node->line, node->col);
         ret->str_val = calloc(2, sizeof(char));
@@ -1574,6 +1573,7 @@ AST_T *ast_visit_and(AST_T *node)
 {
     AST_T *ret = init_ast(AST_BOOL, node->line, node->col);
     AST_T *left = ast_visit(node->op_left);
+    if (!left->is_true) return ret;
     AST_T *right = ast_visit(node->op_right);
     ret->is_true = left->is_true && right->is_true;
     return ret;
@@ -2182,6 +2182,12 @@ AST_T *ast_visit_not_eq_comp(AST_T *node)
             ret->is_true = __compare_arr__(left, right, AST_NEQ_COMP);
             return ret;
         }
+        case AST_NOOP:
+        {
+            AST_T *ret = init_ast(AST_BOOL, left->line, left->col);
+            ret->is_true = 0;
+            return ret;
+        }
         default:
             printf(KRED);
             printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
@@ -2201,6 +2207,12 @@ AST_T *ast_visit_not_eq_comp(AST_T *node)
     {
         AST_T *ret = init_ast(AST_BOOL, left->line, left->col);
         ret->is_true = (float)left->int_val != right->float_val;
+        return ret;
+    }
+    else if (left->type == AST_NOOP || right->type == AST_NOOP)
+    {
+        AST_T *ret = init_ast(AST_BOOL, left->line, left->col);
+        ret->is_true = 1;
         return ret;
     }
     else
@@ -2253,6 +2265,12 @@ AST_T *ast_visit_eq_comp(AST_T *node)
             ret->is_true = __compare_arr__(left, right, AST_EQ_COMP);
             return ret;
         }
+        case AST_NOOP:
+        {
+            AST_T *ret = init_ast(AST_BOOL, left->line, left->col);
+            ret->is_true = 1;
+            return ret;
+        }
         default:
             printf(KRED);
             printf("%s:%d:%d -- Cannot compare objects of type '%s'\n",
@@ -2272,6 +2290,12 @@ AST_T *ast_visit_eq_comp(AST_T *node)
     {
         AST_T *ret = init_ast(AST_BOOL, left->line, left->col);
         ret->is_true = (float)left->int_val == right->float_val;
+        return ret;
+    }
+    else if (left->type == AST_NOOP || right->type == AST_NOOP)
+    {
+        AST_T *ret = init_ast(AST_BOOL, left->line, left->col);
+        ret->is_true = 0;
         return ret;
     }
     else
@@ -2637,7 +2661,7 @@ AST_T *ast_visit_if_statement(AST_T *node)
         return ast_visit(node->if_body);
     else if (node->else_body)
         return ast_visit(node->else_body);
-    return init_ast(AST_NOOP, node->line, node->col);
+    return &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};
 }
 
 AST_T *ast_visit_while_loop(AST_T *node)
@@ -2647,13 +2671,13 @@ AST_T *ast_visit_while_loop(AST_T *node)
     {
         AST_T *ret = ast_visit(node->loop_body);
         if (ret->type == AST_BREAK_STMNT)
-            return init_ast(AST_NOOP, node->line, node->col);
+            return &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};
         else if (ret->type == AST_RET_STMNT)
             return ret;
         else
             return ast_visit(node);
     }
-    return init_ast(AST_NOOP, node->line, node->col);
+    return &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};
 }
 
 AST_T *ast_visit_foreach_loop(AST_T *node)
@@ -2690,7 +2714,7 @@ AST_T *ast_visit_foreach_loop(AST_T *node)
             {
                 node->for_each_index = 0;
                 node->for_each_arr = ((void *)0);
-                return init_ast(AST_NOOP, node->line, node->col);
+                return &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};
             }
             else if (ret->type == AST_RET_STMNT)
             {
@@ -2713,7 +2737,7 @@ AST_T *ast_visit_foreach_loop(AST_T *node)
             {
                 node->for_each_index = 0;
                 node->for_each_arr = ((void *)0);
-                return init_ast(AST_NOOP, node->line, node->col);
+                return &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};
             }
             else if (ret->type == AST_RET_STMNT)
             {
@@ -2727,7 +2751,7 @@ AST_T *ast_visit_foreach_loop(AST_T *node)
     }
     node->for_each_index = 0;
     node->for_each_arr = ((void *)0);
-    return init_ast(AST_NOOP, node->line, node->col);
+    return &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};
 }
 
 AST_T *ast_visit_ret_statement(AST_T *node)
@@ -3105,7 +3129,7 @@ AST_T *ast_visit_compound(AST_T *node)
                 return visit;
         }
     }
-    return init_ast(AST_NOOP, node->line, node->col);
+    return &(AST_T) {.type = AST_NOOP, .line=node->line, .col=node->col};
 }
 
 AST_T *__visit_break_stmnt__(AST_T *node, AST_T *to_visit)

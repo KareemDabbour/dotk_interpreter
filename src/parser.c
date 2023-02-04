@@ -65,11 +65,6 @@ const char *token_names[29] = {
     "COLON"                             // 28
 };
 
-static scope_T *get_node_scope(parser_T *parser, AST_T *node)
-{
-    return node->scope == (void *)0 ? parser->scope : node->scope;
-}
-
 parser_T *init_parser(lexer_T *lexer)
 {
     parser_T *parser = calloc(1, sizeof(struct PARSER_STRUCT));
@@ -116,7 +111,7 @@ AST_T *parser_parse_statements(parser_T *parser, scope_T *scope)
     ast_statement = parser_parse_expr(parser, new_scope, compound);
     if (ast_statement->type == AST_NOOP)
     {
-        return init_ast(AST_NOOP, parser->current_token->line, parser->current_token->col);
+        return ast_statement;
     }
     if ((ast_statement->type != AST_FUNC_DEF &&
          ast_statement->type != AST_IF_STMNT &&
@@ -606,7 +601,6 @@ AST_T *parser_parse_continue(parser_T *parser, scope_T *scope)
 AST_T *parser_parse_var(parser_T *parser, scope_T *scope)
 {
     char *var_name = parser->current_token->value;
-    AST_T *ast_var = init_ast(AST_VAR, parser->current_token->line, parser->current_token->col);
     parser_eat(parser, TOKEN_ID);
     if (parser->current_token->type == TOKEN_LPAR)
         return parser_parse_func_call(parser, scope);
@@ -614,6 +608,7 @@ AST_T *parser_parse_var(parser_T *parser, scope_T *scope)
         return parser_parse_var_redef(parser, scope, var_name);
     if (parser->current_token->type == TOKEN_LSBRA)
         return parser_parse_arr_index_assignment(parser, scope, var_name);
+    AST_T *ast_var = init_ast(AST_VAR, parser->current_token->line, parser->current_token->col);
     ast_var->var_name = var_name;
     ast_var->scope = scope;
     return ast_var;

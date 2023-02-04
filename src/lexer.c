@@ -100,7 +100,7 @@ token_T *lexer_get_next_token(lexer_T *lexer)
         if (lexer->c == ' ' || lexer->c == 10)
             lexer_skip_whitespace(lexer);
 
-        if (isalpha(lexer->c))
+        if (lexer->c == '_' || isalpha(lexer->c))
             return lexer_collect_id(lexer);
 
         if (isdigit(lexer->c))
